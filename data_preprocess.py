@@ -1,4 +1,7 @@
 import csv
+from data_reader import read_deriv
+import random
+import os
 
 """
 preprocessing file to extract all pairs that share a relation from DErivBase
@@ -41,24 +44,101 @@ class PreprocesserDB():
         :param dict_relation: dictionary containing relations and word pairs
         :param threshold: threshold of nr of word pairs for one relation
         """
+        word_pairs = set()
         with open(output_path, 'w') as file:
             writer = csv.writer(file, delimiter='\t')
-            writer.writerow(('relation', 'pair'))
+            writer.writerow(('relation', 'w1', 'w2', 'catw1', 'catw2'))
             pairs = 0
             for k, v in dict_relation.items():
                 if len(v) > threshold:
                     pairs += 1
                     for w in v:
-                        writer.writerow((k, w[0], w[1]))
+                        w1 = w[0].split('_')
+                        w2 = w[1].split('_')
+                        if (w1[0], w2[0]) not in word_pairs:
+                            writer.writerow((k, w1[0], w2[0], w1[1], w2[1]))
+                            word_pairs.add((w1[0], w2[0]))
             print('{} relations written to file'.format(pairs))
+
+"""
+method used to create new files: one file per relation
+"""
+def make_relation_files(data_path, out_path):
+    relations, word1, word2 = read_deriv(data_path)
+    dict_rels = dict()
+    for r, w1, w2 in zip(relations, word1, word2):
+        if r not in dict_rels:
+            dict_rels[r] = [(w1,w2)]
+        else:
+            dict_rels[r].append((w1,w2))
+    for k, v in dict_rels.items():
+        with open(out_path + str(k) + '.csv', 'w') as f:
+            writer = csv.writer(f, delimiter='\t')
+            writer.writerow(('relation', 'w1', 'w2'))
+            for w in v:
+                writer.writerow((k, w[0], w[1]))
+
+def make_splits(data_path, out_path):
+    relations, word1, word2 = read_deriv(data_path)
+    data = [(r, w1, w2) for r, w1, w2 in zip(relations, word1, word2)]
+
+    random.shuffle(data)
+
+    train_length = int(len(data) * 0.6)
+    test_length = int(len(data) * 0.2)
+    train = data[:train_length]
+    val = data[train_length:train_length + test_length]
+    test = data[train_length + test_length:]
+    with open(out_path + '_train.csv', 'w') as trf:
+        writer = csv.writer(trf, delimiter='\t')
+        writer.writerow(("relation", "word1", "word2"))
+        for l in train:
+            writer.writerow((l[0], l[1], l[2]))
+    with open(out_path + '_val.csv', 'w') as vf:
+        writer = csv.writer(vf, delimiter='\t')
+        writer.writerow(("relation", "word1", "word2"))
+        for l in val:
+            writer.writerow((l[0], l[1], l[2]))
+    with open(out_path + '_test.csv', 'w') as tef:
+        writer = csv.writer(tef, delimiter='\t')
+        writer.writerow(("relation", "word1", "word2"))
+        for l in test:
+            writer.writerow((l[0], l[1], l[2]))
 
 
 def main():
-    path = "data/DErivBase-v2.0-rulePaths.txt"
-    out = "data/out_threshold8.csv"
-    preprocesser = PreprocesserDB(path)
-    dr = preprocesser.read_file(star=True)
-    preprocesser.write_to_file(out, dr)
+    """
+    to preprocess raw files
+    """
+    # path = "data/DErivBase-v2.0-rulePaths.txt"
+    # out = "data/out_threshold8.csv"
+    # preprocesser = PreprocesserDB(path)
+    # dr = preprocesser.read_file(star=True)
+    # preprocesser.write_to_file(out, dr)
+
+    """
+    to make splits from preprocessed files 
+    """
+    #path = 'data/out_threshold8.csv'
+    #out = 'data/splits/out_threshold8'
+    #make_splits(path, out)
+
+    """
+    to create relation individual files
+    """
+    #path = 'data/out_threshold8.csv'
+    #out = 'data/files_per_relation/not_split/'
+    #make_relation_files(path, out)
+
+    """
+    to make splits from relation individual files
+    """
+    #dir = 'data/files_per_relation/not_split'
+    #for fn in os.listdir(dir):
+    #    path = os.path.join(dir, fn)
+    #    out_path = 'data/files_per_relation/splits/' + str(fn.strip('.csv'))
+    #    make_splits(path, out_path)
+
 
 
 if __name__ == "__main__":
