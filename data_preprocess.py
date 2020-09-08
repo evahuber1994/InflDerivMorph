@@ -38,6 +38,7 @@ class PreprocesserDB():
                             dict_relations[element].append(tup)
         return dict_relations
 
+
     def write_to_file(self, output_path, dict_relation, threshold=80):
         """
         :param output_path: path to write file to
@@ -59,6 +60,29 @@ class PreprocesserDB():
                             writer.writerow((k, w1[0], w2[0], w1[1], w2[1]))
                             word_pairs.add((w1[0], w2[0]))
             print('{} relations written to file'.format(pairs))
+
+class PreprocesserUniMorph:
+    def __init__(self, path, out_path):
+        self.path = path
+        self.out_path = out_path
+    def read_and_write(self):
+        """
+        method that transforms unimorph file into same format as PreprocesserDB
+        """
+        with open(self.out_path, 'w') as wf:
+            writer = csv.writer(wf, delimiter='\t')
+            writer.writerow(("relation", "word1", "word2"))
+            with open(self.path) as rf:
+                for l in rf:
+                    l = l.strip()
+                    if not l: continue
+                    line = l.split('\t')
+                    if '\s' in line[0] or '\s' in line[1]:
+                        continue
+                    writer.writerow((line[2], line[0], line[1]))
+
+
+
 
 """
 method used to create new files: one file per relation
@@ -117,26 +141,33 @@ def main():
     # preprocesser.write_to_file(out, dr)
 
     """
+    to preprocess unimorph raw files
+    """
+    #path = 'data/inflection/deu.csv'
+    #out_path = 'data/inflection/deu_formatted.csv'
+    #prep = PreprocesserUniMorph(path, out_path)
+    #prep.read_and_write()
+    """
     to make splits from preprocessed files 
     """
-    #path = 'data/out_threshold8.csv'
-    #out = 'data/splits/out_threshold8'
+    #path = 'data/inflection/deu_formatted.csv'
+    #out = 'data/inflection/splits/deu_formatted.csv'
     #make_splits(path, out)
 
     """
     to create relation individual files
     """
-    #path = 'data/out_threshold8.csv'
-    #out = 'data/files_per_relation/not_split/'
+    #path = 'data/inflection/deu_formatted.csv'
+    #out = 'data/inflection/files_per_relation/not_split/'
     #make_relation_files(path, out)
 
     """
     to make splits from relation individual files
     """
-    #dir = 'data/files_per_relation/not_split'
+    #dir = 'data/inflection/files_per_relation/not_split'
     #for fn in os.listdir(dir):
     #    path = os.path.join(dir, fn)
-    #    out_path = 'data/files_per_relation/splits/' + str(fn.strip('.csv'))
+    #    out_path = 'data/inflection/files_per_relation/split/' + str(fn.strip('.csv'))
     #    make_splits(path, out_path)
 
 

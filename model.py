@@ -13,7 +13,6 @@ class BasicFeedForward(nn.Module):
 
         self._hidden_layer = OrderedDict()
         for i in range(1, layers + 1):
-
             self._hidden_layer[str(i) + "LF"] = nn.Linear(input_dim, hidden_dim)
             if non_lin:
                 self._hidden_layer[str(i) + "NL"] = nn.Sigmoid()
