@@ -70,23 +70,26 @@ class SimpleDataLoader(Dataset):
 
 
 class FeatureExtractor:
-    def __init__(self, path_to_embeddings):
+    def __init__(self, path_to_embeddings, embedding_dim):
         if path_to_embeddings.endswith("fifu"):
             self._embeds = finalfusion.load_finalfusion(path_to_embeddings)
         elif path_to_embeddings.endswith("bin"):
-            self._embeds = finalfusion.load_fasttext(path_to_embeddings)
+            self._embeds = finalfusion.load_word2vec(path_to_embeddings)
         elif path_to_embeddings.endswith("w2v"):
             self._embeds = finalfusion.load_word2vec(path_to_embeddings)
+        elif path_to_embeddings.endswith("txt"):
+            self._embeds = finalfusion.load_text(path_to_embeddings)
         else:
             print("attempt to read invalid embeddings")
-
+        self._vocab = self._embeds.vocab
+        self._embedding_dim = embedding_dim
     def get_embedding(self, word):
         """
         takes a word and returns its embedding
         :param word: the word for which an embedding should be returned
         :return: the embedding of the word or random embedding if word not in vocab
         """
-        embedding = self._embeds.embedding(word)
+        embedding = self._embeds.embedding(word, default=None)
         if embedding is None:
             print("found unknown word : ", word)
             embedding = np.random.rand(self.embedding_dim).astype(np.float32)
@@ -109,15 +112,25 @@ class FeatureExtractor:
     @property
     def embedding_dim(self):
         return self._embedding_dim
-
+    @property
+    def vocab(self):
+        return self._vocab
 def main():
+    """
     emb = 'de_core_news_sm'
     path = 'data/out_threshold8.csv'
     _, words, labels = read_deriv(path)
 
     extractor = SimpleDataLoader(emb, words[1:10], labels[1:10])
     for i,j in extractor:
-        print(i)
+        print(i)"""
+    #path_emb = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/german-skipgram-mincount-30-ctx-10-dims-300.fifu'
+    path_emb = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/45/model.bin'
+    extractor = FeatureExtractor(path_emb, 300)
+    voc = extractor.vocab
+    print(type(voc))
+    print(voc.words[:10])
+    #emb = extractor.get_embedding("schön")
 
 
 

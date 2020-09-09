@@ -3,6 +3,9 @@ from model import BasicFeedForward
 from torch import optim
 import torch.nn as nn
 import torch
+import numpy as np
+import os
+from rank_evaluation import Ranker
 from sklearn.metrics.pairwise import cosine_similarity
 
 
@@ -74,6 +77,7 @@ def predict(model_path, data_loader):
     true_word_forms = []
 
     for batch in data_loader:
+        print(batch['w1_form'], batch['w2_form'])
         out = model(batch['w1'])
         for pred in out:
             predictions.append(pred.detach().numpy())
@@ -91,8 +95,8 @@ def predict(model_path, data_loader):
     #     print(p.shape, emb2.shape)
     #     sims.append(cosine_similarity(p.reshape(1, -1),emb2.reshape(1, -1)))
     # print(sims)
-def save_predictions():
-    pass
+def save_predictions(path, predictions):
+    np.save(file=path, arr=np.array(predictions), allow_pickle=True)
 
 def evaluate():
     pass
@@ -104,7 +108,7 @@ def main():
     path_val = 'data/files_per_relation/splits/dAA01_val.csv'
     path_test = 'data/files_per_relation/splits/dAA01_test.csv'
     embs = 'embeddings/german-skipgram-mincount-30-ctx-10-dims-300.fifu'
-    feature_extractor = FeatureExtractor(embs)
+    feature_extractor = FeatureExtractor(embs, embedding_dim=300)
     _, word1_train, word2_train = read_deriv(path_train)
     _, word1_val, word2_val = read_deriv(path_val)
     _, word1_test, word2_test = read_deriv(path_test)
@@ -117,10 +121,14 @@ def main():
     # input_dim, hidden_dim, label_nr, dropout_rate=0, non_lin=True, function='sigmoid', layers=1
     model1 = BasicFeedForward(300, 300, 300, non_lin=True)
     # train_loader, val_loader, model, model_path, nr_epochs, patience
-    #train(train_l, val_l, model1, 'data/trained_models/', 100, 10)
+    train(train_l, val_l, model1, 'data/trained_models/', 100, 10)
     path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/trained_models/epoch100'
-    predict(path, test_l)
-
-
+    predictions, target_word_forms = predict(path, test_l)
+    path_pred = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/first_trial/predictions.npy'
+    save_predictions(path_pred, predictions)
+    #save predictions
+    path_results = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/first_trial/results.txt'
+    #path_pred = os.path.join(path_pred, '.npy')
+    ranker = Ranker(path_predictions=path_pred, target_words=target_word_forms, embedding_extractor=feature_extractor,embedding_dim=300, path_results=path_results )
 if __name__ == "__main__":
     main()
