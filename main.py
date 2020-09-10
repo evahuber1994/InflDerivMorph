@@ -80,7 +80,7 @@ def predict(model_path, data_loader):
     true_word_forms = []
 
     for batch in data_loader:
-        print(batch['w1_form'], batch['w2_form'])g
+        print(batch['w1_form'], batch['w2_form'])
         out = model(batch['w1'])
         for pred in out:
             predictions.append(pred.detach().numpy())
@@ -131,28 +131,33 @@ def main():
     with open(args.config) as cfg_file:
         config = toml.load(cfg_file)
 
-    feature_extractor = FeatureExtractor(config.embs, embedding_dim=config.embedding_dim)
+    feature_extractor = FeatureExtractor(config['embeddings'], embedding_dim=config['embedding_dim'])
     print("loaded embeddings")
-    vocabulary_matrix, lab2idx, idx2lab = make_vocabulary_matrix(feature_extractor, config.embedding_dim)
+    vocabulary_matrix, lab2idx, idx2lab = make_vocabulary_matrix(feature_extractor, config['embedding_dim'])
     print("built vocabulary matrix")
     dict_results = dict()
-    for subdir, _, files in os.walk(config.data_path):
+    for subdir in os.listdir(config['data_path']):
         train_path = ''
         val_path = ''
         test_path = ''
         mod_path = ''
         pred_path = ''
         res_path = ''
+        subdir = os.path.join(config['data_path'], subdir)
+        files = os.listdir(subdir)
         for f in files:
+            print("file",f)
             if f.endswith('train.csv'):
                 train_path = os.path.join(subdir, f)
-                name_mod = "/model" + f.strip('train.csv')
+
+                name_mod = "model/" + f.strip('_train.csv')
                 file = f.strip('train.csv')
                 name_pred = f.strip('train.csv') + "predictions.npy"
                 name_res = f.strip('train.csv') + "results.csv"
-                mod_path = os.path.join(config.out_path, name_mod)
-                pred_path = os.path.join(config.out_path, name_pred)
-                res_path = os.path.join(config.out_path, name_res)
+                mod_path = "results/model/" + f.strip('_train.csv')
+                pred_path = os.path.join(config['out_path'], name_pred)
+                res_path = os.path.join(config['out_path'], name_res)
+                print(mod_path, pred_path, res_path)
             elif f.endswith('val.csv'):
                 val_path = os.path.join(subdir, f)
             elif f.endswith('test.csv'):
@@ -165,15 +170,15 @@ def main():
         data_train = SimpleDataLoader(feature_extractor, word1_train, word2_train)
         data_val = SimpleDataLoader(feature_extractor, word1_val, word2_val)
         data_test = SimpleDataLoader(feature_extractor, word1_test, word2_test)
-        train_l = torch.utils.data.DataLoader(data_train, batch_size=config.batch_size)
-        val_l = torch.utils.data.DataLoader(data_val, batch_size=config.batch_size)
-        test_l = torch.utils.data.DataLoader(data_test, batch_size=config.batch_size)
+        train_l = torch.utils.data.DataLoader(data_train, batch_size=config['batch_size'])
+        val_l = torch.utils.data.DataLoader(data_val, batch_size=config['batch_size'])
+        test_l = torch.utils.data.DataLoader(data_test, batch_size=config['batch_size'])
         # input_dim, hidden_dim, label_nr, dropout_rate=0, non_lin=True, function='sigmoid', layers=1
-        model = BasicFeedForward(input_dim=config.embedding_dim, hidden_dim=config.hidden_dim,
-                                  label_nr=config.embedding_dim, dropout_rate=config.dropout,
-                                  non_lin=config.non_linearity, function=config.non_linearity_function, layers=config.nr_layers)
+        model = BasicFeedForward(input_dim=config['embedding_dim'], hidden_dim=config['hidden_dim'],
+                                  label_nr=config['embedding_dim'], dropout_rate=config['dropout'],
+                                  non_lin=config['non_linearity'], function=config['non_linearity_function'], layers=config['nr_layers'])
 
-        train(train_l, val_l, model, mod_path, config.nr_epochs, config.patience)
+        train(train_l, val_l, model, mod_path, config['nr_epochs'], config['patience'])
 
         predictions, target_word_forms = predict(mod_path, test_l)
         save_predictions(pred_path, predictions)
@@ -184,7 +189,7 @@ def main():
         average_sim = sum(ranker.preds_sims)/len(ranker.preds_sims)
         dict_results[str(file)] = [average_rank, average_rr, average_sim]
 
-    out_summary_path = os.path.join(config.out_path, "summary.csv")
+    out_summary_path = os.path.join(config['out_path'], "summary.csv")
     avg_r = []
     avg_rr = []
     avg_sim = []
