@@ -5,6 +5,9 @@ import torch.nn as nn
 import torch
 import numpy as np
 import os
+import argparse
+import toml
+import csv
 from rank_evaluation import Ranker
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -40,7 +43,7 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience):
             val_loss = loss(out, batch['w2'])
             # valid_losses.append(loss.item())
             cosines = cos(out, batch['w2'])
-            val_cos_sim.append(sum(cosines)/len(cosines))
+            val_cos_sim.append(sum(cosines) / len(cosines))
 
         mean_cos = sum(val_cos_sim) / len(val_cos_sim)
         total_cos_similarities.append(mean_cos)
@@ -54,7 +57,7 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience):
             current_patience -= 1
         if current_patience < 1:
             try:
-                save_model(best_model, model_path + 'epoch' + str(best_epoch))
+                save_model(best_model, model_path)
                 print("stopped after epoch {}, cosine similarity {}".format(epoch, best_cos))
                 break
             except:
@@ -63,7 +66,7 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience):
 
     if current_patience > 0:
         print("finishes after all epochs, cosine similarity {}".format(best_cos))
-        save_model(best_model, model_path + 'epoch' + str(best_epoch))
+        save_model(best_model, model_path + str(best_epoch))
 
 
 def save_model(model, path):
@@ -77,7 +80,7 @@ def predict(model_path, data_loader):
     true_word_forms = []
 
     for batch in data_loader:
-        print(batch['w1_form'], batch['w2_form'])
+        print(batch['w1_form'], batch['w2_form'])g
         out = model(batch['w1'])
         for pred in out:
             predictions.append(pred.detach().numpy())
@@ -85,7 +88,6 @@ def predict(model_path, data_loader):
             true_word_forms.append(wf)
 
     return predictions, true_word_forms
-
 
     # sims = []
     # print("LENGHTS", len(predictions), len(true_word_forms))
@@ -95,40 +97,144 @@ def predict(model_path, data_loader):
     #     print(p.shape, emb2.shape)
     #     sims.append(cosine_similarity(p.reshape(1, -1),emb2.reshape(1, -1)))
     # print(sims)
+
+
 def save_predictions(path, predictions):
     np.save(file=path, arr=np.array(predictions), allow_pickle=True)
+
 
 def evaluate():
     pass
 
 
+def make_vocabulary_matrix(feature_extractor, embedding_dim):
+    vocabulary = feature_extractor.vocab.words
+    lab2idx = {word: i + 1 for i, word in enumerate(vocabulary)}
+    lab2idx['UNK'] = 0
+    # dict(zip(self.vocabulary, range(len(self.vocabulary)))) #dict with vocabulary and indices
+    idx2lab = {i: word for word, i in lab2idx.items()}
+    vocabulary_matrix = np.zeros((len(vocabulary) + 1, embedding_dim))  # matrix with whole vocabulary
+    vocabulary_matrix[0] = np.random.rand(1, embedding_dim)
+
+    for i in range(len(vocabulary)):
+        vocabulary_matrix[i + 1] = feature_extractor.get_embedding(vocabulary[i])
+
+    return vocabulary_matrix, lab2idx, idx2lab
+
+
 def main():
-    #emb = 'de_core_news_lg'
-    path_train = 'data/files_per_relation/splits/dAA01_train.csv'
-    path_val = 'data/files_per_relation/splits/dAA01_val.csv'
-    path_test = 'data/files_per_relation/splits/dAA01_test.csv'
-    embs = 'embeddings/german-skipgram-mincount-30-ctx-10-dims-300.fifu'
-    feature_extractor = FeatureExtractor(embs, embedding_dim=300)
-    _, word1_train, word2_train = read_deriv(path_train)
-    _, word1_val, word2_val = read_deriv(path_val)
-    _, word1_test, word2_test = read_deriv(path_test)
-    data_train = SimpleDataLoader(feature_extractor, word1_train, word2_train)
-    data_val = SimpleDataLoader(feature_extractor, word1_val, word2_val)
-    data_test = SimpleDataLoader(feature_extractor, word1_test, word2_test)
-    train_l = torch.utils.data.DataLoader(data_train, batch_size=12)
-    val_l = torch.utils.data.DataLoader(data_val, batch_size=12)
-    test_l = torch.utils.data.DataLoader(data_test, batch_size=12)
-    # input_dim, hidden_dim, label_nr, dropout_rate=0, non_lin=True, function='sigmoid', layers=1
-    model1 = BasicFeedForward(300, 300, 300, non_lin=True)
-    # train_loader, val_loader, model, model_path, nr_epochs, patience
-    train(train_l, val_l, model1, 'data/trained_models/', 100, 10)
-    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/trained_models/epoch100'
-    predictions, target_word_forms = predict(path, test_l)
-    path_pred = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/first_trial/predictions.npy'
-    save_predictions(path_pred, predictions)
-    #save predictions
-    path_results = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/first_trial/results.txt'
-    #path_pred = os.path.join(path_pred, '.npy')
-    ranker = Ranker(path_predictions=path_pred, target_words=target_word_forms, embedding_extractor=feature_extractor,embedding_dim=300, path_results=path_results )
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('config')
+    parser.add_argument('all_models', action='store_false')
+    args = parser.parse_args()
+    with open(args.config) as cfg_file:
+        config = toml.load(cfg_file)
+
+    feature_extractor = FeatureExtractor(config.embs, embedding_dim=config.embedding_dim)
+    print("loaded embeddings")
+    vocabulary_matrix, lab2idx, idx2lab = make_vocabulary_matrix(feature_extractor, config.embedding_dim)
+    print("built vocabulary matrix")
+    dict_results = dict()
+    for subdir, _, files in os.walk(config.data_path):
+        train_path = ''
+        val_path = ''
+        test_path = ''
+        mod_path = ''
+        pred_path = ''
+        res_path = ''
+        for f in files:
+            if f.endswith('train.csv'):
+                train_path = os.path.join(subdir, f)
+                name_mod = "/model" + f.strip('train.csv')
+                file = f.strip('train.csv')
+                name_pred = f.strip('train.csv') + "predictions.npy"
+                name_res = f.strip('train.csv') + "results.csv"
+                mod_path = os.path.join(config.out_path, name_mod)
+                pred_path = os.path.join(config.out_path, name_pred)
+                res_path = os.path.join(config.out_path, name_res)
+            elif f.endswith('val.csv'):
+                val_path = os.path.join(subdir, f)
+            elif f.endswith('test.csv'):
+                test_path = os.path.join(subdir, f)
+            else:
+                raise Exception("wrong file path in directory: {}".format(f))
+        _, word1_train, word2_train = read_deriv(train_path)
+        _, word1_val, word2_val = read_deriv(val_path)
+        _, word1_test, word2_test = read_deriv(test_path)
+        data_train = SimpleDataLoader(feature_extractor, word1_train, word2_train)
+        data_val = SimpleDataLoader(feature_extractor, word1_val, word2_val)
+        data_test = SimpleDataLoader(feature_extractor, word1_test, word2_test)
+        train_l = torch.utils.data.DataLoader(data_train, batch_size=config.batch_size)
+        val_l = torch.utils.data.DataLoader(data_val, batch_size=config.batch_size)
+        test_l = torch.utils.data.DataLoader(data_test, batch_size=config.batch_size)
+        # input_dim, hidden_dim, label_nr, dropout_rate=0, non_lin=True, function='sigmoid', layers=1
+        model = BasicFeedForward(input_dim=config.embedding_dim, hidden_dim=config.hidden_dim,
+                                  label_nr=config.embedding_dim, dropout_rate=config.dropout,
+                                  non_lin=config.non_linearity, function=config.non_linearity_function, layers=config.nr_layers)
+
+        train(train_l, val_l, model, mod_path, config.nr_epochs, config.patience)
+
+        predictions, target_word_forms = predict(mod_path, test_l)
+        save_predictions(pred_path, predictions)
+        ranker = Ranker(path_predictions=pred_path, target_words=target_word_forms, vocabulary_matrix=vocabulary_matrix,
+                        lab2idx=lab2idx, idx2lab=idx2lab, path_results=res_path)
+        average_rank = sum(ranker.ranks)/len(ranker.ranks)
+        average_rr = sum(ranker.reciprank)/len(ranker.reciprank)
+        average_sim = sum(ranker.preds_sims)/len(ranker.preds_sims)
+        dict_results[str(file)] = [average_rank, average_rr, average_sim]
+
+    out_summary_path = os.path.join(config.out_path, "summary.csv")
+    avg_r = []
+    avg_rr = []
+    avg_sim = []
+    with open(out_summary_path, 'w') as file:
+        writer = csv.writer(file, delimiter="\t")
+        writer.writerow(("relation", "avg_rank", "avg_reciprank", "avg_sim"))
+        for k,v in dict_results.items():
+            writer.writerow((k, v[0], v[1], v[2]))
+            avg_r.append(v[0])
+            avg_rr.append(v[1])
+            avg_sim.append(v[2])
+    print("average rank of config: {}, average reciprank of config: {}, average sim of config: {}".format(float(sum(avg_r)/len(avg_r)), float(sum(avg_rr)/len(avg_rr)), float(sum(avg_sim)/len(avg_sim))))
+
+        ###save average of all models
+
+    # if file endswith train.csv if file endswith
+
+    # path_train = 'dNA22_train.csv'
+    # path_val = 'dNA22_val.csv'
+    # path_test = 'dNA22_test.csv'
+    # embs = 'word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
+    # embedding_dim = 200
+    # epochs = 100
+    # patience = 10
+    # batch_size = 12
+    #
+    # _, word1_train, word2_train = read_deriv(path_train)
+    # _, word1_val, word2_val = read_deriv(path_val)
+    # _, word1_test, word2_test = read_deriv(path_test)
+    # data_train = SimpleDataLoader(feature_extractor, word1_train, word2_train)
+    # data_val = SimpleDataLoader(feature_extractor, word1_val, word2_val)
+    # data_test = SimpleDataLoader(feature_extractor, word1_test, word2_test)
+    # train_l = torch.utils.data.DataLoader(data_train, batch_size=batch_size)
+    # val_l = torch.utils.data.DataLoader(data_val, batch_size=batch_size)
+    # test_l = torch.utils.data.DataLoader(data_test, batch_size=batch_size)
+    # # input_dim, hidden_dim, label_nr, dropout_rate=0, non_lin=True, function='sigmoid', layers=1
+    # model1 = BasicFeedForward(embedding_dim, embedding_dim, embedding_dim, non_lin=True)
+    # model_path = 'output/model/model1'
+    # # train_loader, val_loader, model, model_path, nr_epochs, patience
+    # train(train_l, val_l, model1, model_path, epochs, patience)
+    #
+    # predictions, target_word_forms = predict(model_path, test_l)
+    # path_pred = 'output/preds.npy'
+    # save_predictions(path_pred, predictions)
+    # # save predictions
+    # path_results = 'output/results.txt'
+    # # path_pred = os.path.join(path_pred, '.npy')
+    # ranker = Ranker(path_predictions=path_pred, target_words=target_word_forms, vocabulary_matrix=vocabulary_matrix,
+    #                 lab2idx=lab2idx, idx2lab=idx2lab, path_results=path_results)
+
+
 if __name__ == "__main__":
     main()
