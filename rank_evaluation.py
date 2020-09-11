@@ -120,12 +120,12 @@ class Ranker:
                 writer.writerow(inst)
 
 
-        path_coarse = self.path_results.strip(".csv") + "_average.csv"
-        with open(path_coarse, 'w') as file:
-            file.write("average rank:\t {} \n".format(sum(ranks)/len(ranks)))
-            file.write("average recip rank:\t {} \n".format(sum(rr)/len(rr)))
-            file.write("average similarity:\t {} \n".format(sum(preds_sims)/len(preds_sims)))
-            file.write("quartiles:\t {} \n".format(q))
+        # path_coarse = self.path_results.strip(".csv") + "_average.csv"
+        # with open(path_coarse, 'w') as file:
+        #     file.write("average rank:\t {} \n".format(sum(ranks)/len(ranks)))
+        #     file.write("average recip rank:\t {} \n".format(sum(rr)/len(rr)))
+        #     file.write("average similarity:\t {} \n".format(sum(preds_sims)/len(preds_sims)))
+        #     file.write("quartiles:\t {} \n".format(q))
 
 
             #file.write("ranks:\t {} \n ".format(str(ranks)))

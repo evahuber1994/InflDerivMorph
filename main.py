@@ -66,7 +66,7 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience):
 
     if current_patience > 0:
         print("finishes after all epochs, cosine similarity {}".format(best_cos))
-        save_model(best_model, model_path + str(best_epoch))
+        save_model(best_model, model_path)
 
 
 def save_model(model, path):
@@ -151,7 +151,7 @@ def main():
                 train_path = os.path.join(subdir, f)
 
                 name_mod = "model/" + f.strip('_train.csv')
-                file = f.strip('train.csv')
+                file = f.strip('_train.csv')
                 name_pred = f.strip('train.csv') + "predictions.npy"
                 name_res = f.strip('train.csv') + "results.csv"
                 mod_path = "results/model/" + f.strip('_train.csv')

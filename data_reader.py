@@ -5,6 +5,10 @@ import torch
 import finalfusion
 import numpy as np
 
+"""
+reads file in the format of the standard morphology file in this work 
+first column relation_type, second column base word, third column inflection/derivation
+"""
 def read_deriv(path):
     relations = []
     word1 = []
@@ -115,6 +119,8 @@ class FeatureExtractor:
     @property
     def vocab(self):
         return self._vocab
+
+
 def main():
     """
     emb = 'de_core_news_sm'
