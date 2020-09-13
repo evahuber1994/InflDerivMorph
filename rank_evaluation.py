@@ -8,33 +8,17 @@ class Ranker:
         self._vocabulary_matrix = vocabulary_matrix
         self._lab2idx = lab2idx
         self._idx2lab = idx2lab
-        # self._extractor = embedding_extractor
-        # self._vocabulary = self.extractor.vocab.words #list with whole vocabulary
-        # print("voc", len(self._vocabulary))
-        # #self._vocabulary = target_words
-        # #random.shuffle(self._vocabulary)
-        # self._lab2idx = {word:i+1 for i, word in enumerate(self.vocabulary)}
-        # self._lab2idx['UNK'] = 0
-        #     #dict(zip(self.vocabulary, range(len(self.vocabulary)))) #dict with vocabulary and indices
-        # self._idx2lab = {i:word for word,i in self.lab2idx.items()}
-        # self._vocabulary_matrix = np.zeros((len(self.vocabulary)+1, embedding_dim)) # matrix with whole vocabulary
-        # self._vocabulary_matrix[0] = np.random.rand(1,embedding_dim)
-        #
-        # for i in range(len(self.vocabulary)):
-        #     self._vocabulary_matrix[i+1] = embedding_extractor.get_embedding(self.vocabulary[i])
-        # print("built vocabualry matrix in ranker")
+
         self._predicted_embeddings = np.load(path_predictions, allow_pickle=True)
         #here open embeddings an save in prediction_matrix
         self._prediction_matrix = None
 
         self._target_words = target_words
-        #self._target_embeddings = self._extractor.get_array_embeddings(self.target_words)
         self._path_results = path_results
         self._ranks, gold_sims, self._preds_sims = self.get_rank()
         self._quartiles = self.calculate_quartiles(self.ranks)
         self._reciprank = self.reciprocal_rank(self.ranks)
 
-        #if save_detailed:
 
         self.save_metrics(self.target_words,self.ranks, self.quartiles, self.reciprank,self.preds_sims)
 
@@ -75,6 +59,8 @@ class Ranker:
             print("items at higher ranks than target", rank)
             #self.save_ranks(higher_ranks.tolist(), target_ids[i])
             #ranks.append(len(higher_ranks) + 1)
+            if rank > 100:
+                rank = 100
             ranks.append(rank)
         return ranks, gold_similarities, prediction_similarities
     def metric(self):
@@ -120,19 +106,6 @@ class Ranker:
                 writer.writerow(inst)
 
 
-        # path_coarse = self.path_results.strip(".csv") + "_average.csv"
-        # with open(path_coarse, 'w') as file:
-        #     file.write("average rank:\t {} \n".format(sum(ranks)/len(ranks)))
-        #     file.write("average recip rank:\t {} \n".format(sum(rr)/len(rr)))
-        #     file.write("average similarity:\t {} \n".format(sum(preds_sims)/len(preds_sims)))
-        #     file.write("quartiles:\t {} \n".format(q))
-
-
-            #file.write("ranks:\t {} \n ".format(str(ranks)))
-            ##file.write("quartiles:\t {} \n".format(str(q)))
-            #file.write("reciprocal rank:\t {} \n".format(str(rr)))
-            #file.write("preds_sim: \t {} \n".format(str(preds_sims)))
-
     def save_fine_metrics(self):
         pass
 
@@ -141,14 +114,6 @@ class Ranker:
         #print("t", target)
         ranks_words = [self.idx2lab[idx] for idx in ranks]
         return ranks_words.append(self.idx2lab[target])
-
-
-    # @property
-    # def vocabulary(self):
-    #     return self._vocabulary
-    # @property
-    # def extractor(self):
-    #     return self._extractor
 
     @property
     def vocabulary_matrix(self):
@@ -166,9 +131,7 @@ class Ranker:
     def idx2lab(self):
         return self._idx2lab
 
-    # @property
-    # def target_embeddings(self):
-    #     return self._target_embeddings
+
 
     @property
     def reciprank(self):

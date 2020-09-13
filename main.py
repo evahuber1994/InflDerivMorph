@@ -157,7 +157,6 @@ def main():
                 mod_path = "results/model/" + f.strip('_train.csv')
                 pred_path = os.path.join(config['out_path'], name_pred)
                 res_path = os.path.join(config['out_path'], name_res)
-                print(mod_path, pred_path, res_path)
             elif f.endswith('val.csv'):
                 val_path = os.path.join(subdir, f)
             elif f.endswith('test.csv'):

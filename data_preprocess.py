@@ -2,7 +2,7 @@ import csv
 from data_reader import read_deriv, FeatureExtractor
 import random
 import os
-
+import pandas as pd
 """
 preprocessing file to extract all pairs that share a relation from DErivBase
 boolean in read method to indicate whether inverse relation marked by star should be added or not
@@ -62,7 +62,15 @@ class Preprocesser():
             writer.writerow(('relation', 'w1', 'w2', 'catw1', 'catw2'))
             pairs = 0
             for k, v in dict_relation.items():
-                if len(v) > self.threshold:
+                count = len(v)
+                if self.oov:  # if oov is true, then skip all words that either base or derived form is not in vocabulary
+                    i = 0
+                    for w in v:
+                        w1 = w[0].split('_')
+                        w2 = w[1].split('_')
+                        if w1[0] not in self.embedding_voc or w2[0] not in self.embedding_voc:
+                            i +=1
+                if len(v)-i > self.threshold:
                     for w in v:
                         w1 = w[0].split('_')
                         w2 = w[1].split('_')
@@ -202,34 +210,34 @@ def make_splits_in_dir(directory, out_path, size_train, size_test):
         out = os.path.join(new_path, fn.strip('.csv'))
         # out =  os.path.join(out_path, new_dir, str(fn.strip('csv')))
         make_splits(path, out, size_train, size_test)
-    # dir = 'data/inflection/files_per_relation/not_split'
-    # for fn in os.listdir(dir):
-    #    path = os.path.join(dir, fn)
-    #    out_path = 'data/inflection/files_per_relation/split/' + str(fn.strip('.csv'))
-    #    make_splits(path, out_path)
+
+def shorten_files(path_in, path_out, length):
+    df_in = pd.read_csv(path_in, delimiter='\t')
+    df_in = df_in.sample(frac=1)[:length]
+    df_in.to_csv(path_out, sep='\t')
 
 
 def main():
     """
     path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/DErivBase-v2.0-rulePaths.txt'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/deriv_thresh80.csv'
+    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/deriv_thresh80_new.csv'
     embeddings = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
     voc = FeatureExtractor(embeddings, 200)
 
     # path,out_path, embedding_voc, star=True, OOV =True, threshold=80
     prep = Preprocesser(path, out_path, voc.vocab, star=True, OOV=True, threshold=80)
     prep.read_and_write_DB()
-
-
-    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/deriv_thresh80.csv'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/relation_files'
+    """
+    """
+    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/deriv_thresh80_new.csv'
+    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/rf_new'
     make_relation_files(path,out_path)
     """
-    """
-    data_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/relation_files'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/split_relations'
-    make_splits_in_dir(data_path, out_path, size_train = 0.6, size_test = 0.2)
-    """
+
+    #data_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/relation_files'
+    #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/split_relations'
+    #make_splits_in_dir(data_path, out_path, size_train = 0.6, size_test = 0.2)
+
     #####UNIMORPH
     """
     path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/deu_formatted.csv'
@@ -244,9 +252,21 @@ def main():
     #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/relations'
     #make_relation_files(path,out_path)
 
-    data_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/relations'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/split_relations'
+    #data_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/relations'
+    #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/split_relations'
+    #make_splits_in_dir(data_path, out_path, size_train = 0.6, size_test = 0.2)
+    """
+    path_out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_relation_files_short'
+    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/relations'
+    for d in os.listdir(path):
+        p_f = os.path.join(path, d)
+        o_p = os.path.join(path_out, d)
+        shorten_files(p_f, o_p, 558)
+    """
+    data_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_relation_files_short'
+    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/split_relations_short'
     make_splits_in_dir(data_path, out_path, size_train = 0.6, size_test = 0.2)
+
 
 
 if __name__ == "__main__":
