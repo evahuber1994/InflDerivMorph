@@ -46,13 +46,22 @@ class RelationFeedForward(nn.Module):
         self._model = nn.Sequential(self._hidden_layer)  # second argument is output layer
 
     def forward(self,batch):
-        concat_vector = concatenate(batch['w1'], self._relation_embeddings(batch['rel']), 1)
+        #print("relation", batch['rel'], "w1", "w1 form and shape of embedding", batch['w1_form'], batch["w1"].shape )
+        #print("shape of rel embedding",  self._relation_embeddings(batch['rel']).shape)
+
+        #print(batch['w1'], batch['rel'])
+        concat_vector = concatenate(batch['w1'], self._relation_embeddings(batch['rel'].squeeze()), 1)
+
         return self.model(concat_vector)
 
 
     @property
     def relation_embeddings(self):
         return self._relation_embeddings
+
+    @property
+    def model(self):
+        return self._model
 
 def concatenate(v1, v2, axis):
     return torch.cat((v1,v2), axis)

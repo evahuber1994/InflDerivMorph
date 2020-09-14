@@ -2,7 +2,7 @@ import argparse
 import toml
 import torch
 from model import RelationFeedForward
-from utils import make_vocabulary_matrix
+from utils import make_vocabulary_matrix, shuffle_lists
 from data_reader import create_label_encoder, FeatureExtractor, RelationsDataLoader, read_deriv
 import os
 from torch import optim
@@ -32,7 +32,7 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience):
             optimizer.zero_grad()
         model.eval()
         for batch in val_loader:
-            out = model(batch['w1'])
+            out = model(batch)
             val_loss = loss(out, batch['w2'])
             # valid_losses.append(loss.item())
             cosines = cos(out, batch['w2'])
@@ -110,17 +110,22 @@ def main():
     res_path = os.path.join(config['out_path'], "results")
 
     relation_train, word1_train, word2_train = read_deriv(train_path)
+    relation_train, word1_train, word2_train = shuffle_lists(zip(relation_train, word1_train, word2_train))
     relation_val, word1_val, word2_val = read_deriv(val_path)
+    relation_val, word1_val, word2_val = shuffle_lists(zip(relation_val, word1_val, word2_val))
     relation_test, word1_test, word2_test = read_deriv(test_path)
+    relation_test, word1_test, word2_test = shuffle_lists(zip(relation_test, word1_test, word2_test))
     all_relations = set(relation_train + relation_val + relation_test)
-    encoder = create_label_encoder(all_relations)
+
+    encoder = create_label_encoder(list(all_relations))
     data_train = RelationsDataLoader(feature_extractor, word1_train, word2_train, relation_train, encoder)
     data_val = RelationsDataLoader(feature_extractor, word1_val, word2_val, relation_val, encoder)
     data_test = RelationsDataLoader(feature_extractor, word1_test, word2_test, relation_test, encoder)
+
     train_l = torch.utils.data.DataLoader(data_train, batch_size=config['batch_size'])
     val_l = torch.utils.data.DataLoader(data_val, batch_size=config['batch_size'])
     test_l = torch.utils.data.DataLoader(data_test, batch_size=config['batch_size'])
-    model = RelationFeedForward(emb_dim=config['emb_dim'], emb_dim_rels=config['rel_emb_dim'],
+    model = RelationFeedForward(emb_dim=config['embedding_dim'], emb_dim_rels=config['rel_embedding_dim'],
                                 hidden_dim=config['hidden_dim'], relation_nr=len(all_relations),
                                 dropout_rate=config['dropout_rate'], non_lin=config['non_linearity'], function=config['non_linearity_function'],
                                 layers=config['nr_layers'])

@@ -8,7 +8,7 @@ import os
 import argparse
 import toml
 import csv
-from utils import make_vocabulary_matrix
+from utils import make_vocabulary_matrix, shuffle_lists
 from rank_evaluation import Ranker
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -149,9 +149,12 @@ def main():
         _, word1_train, word2_train = read_deriv(train_path)
         _, word1_val, word2_val = read_deriv(val_path)
         _, word1_test, word2_test = read_deriv(test_path)
+
         data_train = SimpleDataLoader(feature_extractor, word1_train, word2_train)
         data_val = SimpleDataLoader(feature_extractor, word1_val, word2_val)
         data_test = SimpleDataLoader(feature_extractor, word1_test, word2_test)
+
+
         train_l = torch.utils.data.DataLoader(data_train, batch_size=config['batch_size'])
         val_l = torch.utils.data.DataLoader(data_val, batch_size=config['batch_size'])
         test_l = torch.utils.data.DataLoader(data_test, batch_size=config['batch_size'])

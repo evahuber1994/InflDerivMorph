@@ -1,5 +1,5 @@
 import numpy as np
-
+import random
 
 def make_vocabulary_matrix(feature_extractor, embedding_dim):
     vocabulary = feature_extractor.vocab.words
@@ -14,3 +14,8 @@ def make_vocabulary_matrix(feature_extractor, embedding_dim):
         vocabulary_matrix[i + 1] = feature_extractor.get_embedding(vocabulary[i])
 
     return vocabulary_matrix, lab2idx, idx2lab
+
+def shuffle_lists(zipped_lists):
+    temp = list(zipped_lists)
+    random.shuffle(temp)
+    return zip(*temp)
