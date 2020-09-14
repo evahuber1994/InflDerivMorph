@@ -8,7 +8,7 @@ import os
 import argparse
 import toml
 import csv
-from utils import make_vocabulary_matrix, shuffle_lists
+from utils import make_vocabulary_matrix, shuffle_lists, cosine_distance_loss
 from rank_evaluation import Ranker
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -17,21 +17,25 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 
 
-def train(train_loader, val_loader, model, model_path, nr_epochs, patience):
+def train(train_loader, val_loader, model, model_path, nr_epochs, patience, loss_type):
     optimizer = optim.Adam(model.parameters())  # or make an if statement for choosing an optimizer
     current_patience = patience
     # train_loss = 0.0
     best_cos = 0.0
     best_model = None
-    loss = nn.MSELoss()
+    if loss_type == 'cosine_distance':
+        loss = cosine_distance_loss()
+    elif loss_type == 'mse':
+        loss = nn.MSELoss()
+    else:
+        raise Exception("invalid loss type given, has to be \'cosine_distance\' or \'mse\'")
     cos = nn.CosineSimilarity(dim=1, eps=1e-6)
     total_cos_similarities = []
+
     for epoch in range(1, nr_epochs + 1):
         print('epoch {}'.format(epoch))
-
         model.train()
         val_cos_sim = []
-
         # for word1, word2, labels in train_loader:
         for batch in train_loader:
             out = model(batch['w1'])
@@ -45,7 +49,7 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience):
         for batch in val_loader:
             out = model(batch['w1'])
             val_loss = loss(out, batch['w2'])
-            # valid_losses.append(loss.item())
+            #valid_losses.append(loss.item())
             cosines = cos(out, batch['w2'])
             val_cos_sim.append(sum(cosines) / len(cosines))
 
@@ -123,21 +127,16 @@ def main():
         train_path = ''
         val_path = ''
         test_path = ''
-        mod_path = ''
         pred_path = ''
-        res_path = ''
         subdir = os.path.join(config['data_path'], subdir)
         files = os.listdir(subdir)
         for f in files:
             print("file",f)
             if f.endswith('train.csv'):
                 train_path = os.path.join(subdir, f)
-
-                name_mod = "model/" + f.strip('_train.csv')
                 file = f.strip('_train.csv')
                 name_pred = f.strip('train.csv') + "predictions.npy"
                 name_res = f.strip('train.csv') + "results.csv"
-                mod_path = "results/model/" + f.strip('_train.csv')
                 pred_path = os.path.join(config['out_path'], name_pred)
                 res_path = os.path.join(config['out_path'], name_res)
             elif f.endswith('val.csv'):
@@ -165,19 +164,34 @@ def main():
                                       non_lin=config['non_linearity'], function=config['non_linearity_function'], layers=config['nr_layers'])
 
 
-        train(train_l, val_l, model, mod_path, config['nr_epochs'], config['patience'])
+        train(train_l, val_l, model, config['model_path'], config['nr_epochs'], config['patience'], config['loss'])
 
-        predictions, target_word_forms = predict(mod_path, test_l)
+        predictions, target_word_forms = predict(config['model_path'], test_l)
 
         save_predictions(pred_path, predictions)
         ranker = Ranker(path_predictions=pred_path, target_words=target_word_forms, vocabulary_matrix=vocabulary_matrix,
-                        lab2idx=lab2idx, idx2lab=idx2lab, path_results=res_path)
-        average_rank = sum(ranker.ranks)/len(ranker.ranks)
-        average_rr = sum(ranker.reciprank)/len(ranker.reciprank)
-        average_sim = sum(ranker.preds_sims)/len(ranker.preds_sims)
-        dict_results[str(file)] = [average_rank, average_rr, average_sim]
+                        lab2idx=lab2idx, idx2lab=idx2lab)
+        if config['save_detailed']:
+            fine_grained = config['out_path'] + str(file)
+            ranker.save_metrics_per_relation(fine_grained)
 
+
+        #average_rank = sum(ranker.ranks)/len(ranker.ranks)
+        #average_rr = sum(ranker.reciprank)/len(ranker.reciprank)
+        #average_sim = sum(ranker.preds_sims)/len(ranker.preds_sims)
+        acc, f1 = ranker.performance_metrics()
+        dict_results[str(file)] = (ranker.precision_at_rank_1,ranker.precision_at_rank_5, acc, f1)
+
+    out_summary_path = os.path.join(config['out_path'], "results_all.csv")
+    with open(out_summary_path, 'w') as file:
+        writer = csv.writer(file, delimiter="\t")
+        writer.writerow(("relation", "precision_at_rank1", "precision_at_rank5", "accuracy", "f1"))
+        for k,v in dict_results.items():
+            writer.writerow((k,v[0], v[1], v[2], v[3]))
+    """
     out_summary_path = os.path.join(config['out_path'], "summary.csv")
+
+    
     avg_r = []
     avg_rr = []
     avg_sim = []
@@ -190,7 +204,7 @@ def main():
             avg_rr.append(v[1])
             avg_sim.append(v[2])
     print("average rank of config: {}, average reciprank of config: {}, average sim of config: {}".format(float(sum(avg_r)/len(avg_r)), float(sum(avg_rr)/len(avg_rr)), float(sum(avg_sim)/len(avg_sim))))
-
+    """
         ###save average of all models
 
     # if file endswith train.csv if file endswith

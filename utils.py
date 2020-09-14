@@ -1,6 +1,7 @@
 import numpy as np
 import random
-
+import torch
+import torch.nn.functional as F
 def make_vocabulary_matrix(feature_extractor, embedding_dim):
     vocabulary = feature_extractor.vocab.words
     lab2idx = {word: i + 1 for i, word in enumerate(vocabulary)}
@@ -19,3 +20,16 @@ def shuffle_lists(zipped_lists):
     temp = list(zipped_lists)
     random.shuffle(temp)
     return zip(*temp)
+
+
+def cosine_distance_loss(target_phrase, computed_phrase, dim=1, normalize=False):
+    """
+    Computes the cosine distance between two given phrases.
+    """
+    assert target_phrase.shape == computed_phrase.shape, "shapes of original and composed phrase have to be the same"
+    if normalize:
+        target_phrase = F.normalize(target_phrase, p=2, dim=dim)
+        computed_phrase = F.normalize(computed_phrase, p=2, dim=dim)
+    cosine_distances = 1 - F.cosine_similarity(target_phrase, computed_phrase, dim)
+    total = torch.sum(cosine_distances)
+    return total / target_phrase.shape[0]

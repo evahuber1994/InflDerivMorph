@@ -9,7 +9,7 @@ from torch import optim
 import torch.nn as nn
 import numpy as np
 from rank_evaluation import Ranker
-
+import csv
 def train(train_loader, val_loader, model, model_path, nr_epochs, patience):
     optimizer = optim.Adam(model.parameters())  # or make an if statement for choosing an optimizer
     current_patience = patience
@@ -104,17 +104,13 @@ def main():
     test_path = config['test_path']
     val_path = config['val_path']
 
-    mod_path = os.path.join(config['out_path'], "/model") # CHAAAANGE
     emb_path = os.path.join(config['out_path'], "embeddings")
     pred_path = os.path.join(config['out_path'], "predictions")
-    res_path = os.path.join(config['out_path'], "results")
 
-    relation_train, word1_train, word2_train = read_deriv(train_path)
-    relation_train, word1_train, word2_train = shuffle_lists(zip(relation_train, word1_train, word2_train))
-    relation_val, word1_val, word2_val = read_deriv(val_path)
-    relation_val, word1_val, word2_val = shuffle_lists(zip(relation_val, word1_val, word2_val))
-    relation_test, word1_test, word2_test = read_deriv(test_path)
-    relation_test, word1_test, word2_test = shuffle_lists(zip(relation_test, word1_test, word2_test))
+
+    relation_train, word1_train, word2_train = read_deriv(train_path, shuffle=True)
+    relation_val, word1_val, word2_val = read_deriv(val_path, shuffle=True)
+    relation_test, word1_test, word2_test = read_deriv(test_path, shuffle=True)
     all_relations = set(relation_train + relation_val + relation_test)
 
     encoder = create_label_encoder(list(all_relations))
@@ -130,12 +126,26 @@ def main():
                                 dropout_rate=config['dropout_rate'], non_lin=config['non_linearity'], function=config['non_linearity_function'],
                                 layers=config['nr_layers'])
 
-    train(train_l, val_l, model, mod_path, config['nr_epochs'], config['patience'])
-    predictions, target_word_forms = predict(mod_path, test_l)
+    train(train_l, val_l, model, config['model_path'], config['nr_epochs'], config['patience'])
+    predictions, target_word_forms = predict(config['model_path'], test_l)
     save_predictions(pred_path, predictions)
-    save_embeddings(emb_path, mod_path, encoder)
+    save_embeddings(emb_path, config['model_path'], encoder)
     ranker = Ranker(path_predictions=pred_path, target_words=target_word_forms, vocabulary_matrix=vocabulary_matrix,
-                    lab2idx=lab2idx, idx2lab=idx2lab, path_results=res_path)
+                    lab2idx=lab2idx, idx2lab=idx2lab)
+    if config['save_detailed']:
+        fine_path = os.path.join(config['out_path'], "_results_per_relation.csv")
+        ranker.save_metrics_per_relation(fine_path)
+
+    acc_at_1 = ranker.precision_at_rank_1
+    acc_at_5 = ranker.precision_at_rank_5
+    quartiles = ranker.quartiles
+    acc, f1 = ranker.performance_metrics()
+    path_out = os.path.join(config['out_path'], "_summary.csv")
+    with open(path_out, 'w') as file:
+        writer = csv.writer(file, delimiter='\t')
+        writer.writerow(("acc_at_1", "acc_at_5", "quartiles", "acc", "f1"))
+        writer.writerow((acc_at_1, acc_at_5, quartiles, acc, f1))
+
     average_rank = sum(ranker.ranks) / len(ranker.ranks)
     average_rr = sum(ranker.reciprank) / len(ranker.reciprank)
     average_sim = sum(ranker.preds_sims) / len(ranker.preds_sims)

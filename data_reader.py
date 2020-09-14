@@ -4,12 +4,12 @@ from sklearn.preprocessing import LabelEncoder
 import torch
 import finalfusion
 import numpy as np
-
+from utils import shuffle_lists
 """
 reads file in the format of the standard morphology file in this work 
 first column relation_type, second column base word, third column inflection/derivation
 """
-def read_deriv(path):
+def read_deriv(path, shuffle=False):
     relations = []
     word1 = []
     word2 = []
@@ -22,9 +22,12 @@ def read_deriv(path):
             relations.append(line[0])
             word1.append(line[1])
             word2.append(line[2])
-    return relations, word1, word2
+    if shuffle:
+        return shuffle_lists(zip(relations, word1, word2))
+    else:
+        return relations, word1, word2
 
-#not needed at the moment, there are no labels
+
 def create_label_encoder(all_labels):
     label_encoder = LabelEncoder()
     label_encoder.fit(all_labels)

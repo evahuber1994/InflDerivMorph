@@ -3,32 +3,35 @@ import math
 import csv
 from sklearn.metrics.pairwise import cosine_similarity
 import random
+from sklearn.metrics import f1_score, accuracy_score
 class Ranker:
-    def __init__(self, path_predictions, target_words, vocabulary_matrix, lab2idx, idx2lab, path_results):
+    def __init__(self, path_predictions, target_words, vocabulary_matrix, lab2idx, idx2lab):
         self._vocabulary_matrix = vocabulary_matrix
         self._lab2idx = lab2idx
         self._idx2lab = idx2lab
 
         self._predicted_embeddings = np.load(path_predictions, allow_pickle=True)
-        #here open embeddings an save in prediction_matrix
-        self._prediction_matrix = None
 
         self._target_words = target_words
-        self._path_results = path_results
-        self._ranks, gold_sims, self._preds_sims = self.get_rank()
+
+        self._ranks, gold_sims, self._preds_sims, self._predicted_words = self.get_rank()
         self._quartiles = self.calculate_quartiles(self.ranks)
         self._reciprank = self.reciprocal_rank(self.ranks)
 
+        self._precision_at_rank_5 = self.precision_at_rank(5, self.ranks)
+        self._precision_at_rank_1 = self.precision_at_rank(1, self.ranks)
 
-        self.save_metrics(self.target_words,self.ranks, self.reciprank,self.preds_sims)
+        #self.save_metrics(self.target_words,self.ranks, self.reciprank,self.preds_sims)
 
 
     def get_rank(self):
         ranks = []
         gold_similarities = []
         prediction_similarities = []
+        predicted_words = []
 
-
+        #predicted_attribute = self.index2label[np.argmax(composed_attributes_similarity)]
+        #predicted_labels.append(predicted_attribute)
         #target_ids = [self.lab2idx[lab] for lab in self.target_words]
         target_ids = []
         for lab in self.target_words:
@@ -50,6 +53,8 @@ class Ranker:
             print("target to prediction similarity", target_prediction_similarity)
             prediction_similarities.append(float(target_prediction_similarity[0]))
             gold_similarities.append(target_similarities[:, i])
+
+            predicted_words.append(self.idx2lab[np.argmax(target_prediction_similarity)])
             # delete similarity ebtween target label and itself
             target_sims = np.delete(target_similarities[:, i], target_ids[i])
             print("target sims", len(target_sims), target_sims)
@@ -62,9 +67,27 @@ class Ranker:
             if rank > 100:
                 rank = 100
             ranks.append(rank)
-        return ranks, gold_similarities, prediction_similarities
-    def metric(self):
-        pass
+        return ranks, gold_similarities, prediction_similarities, predicted_words
+    @staticmethod
+    def precision_at_rank(k, ranks):
+        """
+            Computes the number of times a rank is equal or lower to a given rank.
+            :param k: the rank for which the precision is computed
+            :param ranks: a list of ranks
+            :return: the precision at a certain rank (float)
+        """
+        assert k >= 1
+        correct = len([rank for rank in ranks if rank <= k])
+        return correct / len(ranks)
+
+    def performance_metrics(self):
+        """
+        calculates weighted f1 and accuracy
+        :return: accuracy and f1
+        """
+        f1 = f1_score(y_true=self.target_words, y_pred=self.predicted_words, average="weighted")
+        acc = accuracy_score(y_true=self.target_words, y_pred=self.predicted_words)
+        return acc, f1
 
     @staticmethod
     def reciprocal_rank(ranks):
@@ -98,11 +121,11 @@ class Ranker:
         return quartiles, "%.2f%% of ranks = 1; %.2f%% of ranks <=5" % (
             (100 * leq1 / float(len(sorted_data))), (100 * leq5 / float(len(sorted_data))))
 
-    def save_metrics(self, target_words, ranks,  rr, preds_sims):
-        with open(self.path_results, 'w') as file:
+    def save_metrics_per_relation(self, path):
+        with open(path, 'w') as file:
             writer = csv.writer(file, delimiter="\t")
             writer.writerow(("target_word", "rank", "recip_rank", "similarity"))
-            for inst in zip(target_words, ranks, rr, preds_sims):
+            for inst in zip(self.target_words, self.ranks, self.reciprank, self.prediction_similarities):
                 writer.writerow(inst)
 
 
@@ -147,9 +170,6 @@ class Ranker:
     def predicted_embeddings(self):
          return self._predicted_embeddings
 
-    @property
-    def path_results(self):
-        return self._path_results
 
     @property
     def preds_sims(self):
@@ -158,3 +178,17 @@ class Ranker:
     @property
     def ranks(self):
         return self._ranks
+    @property
+    def precision_at_rank_1(self):
+        return self._precision_at_rank_1
+    @property
+    def precision_at_rank_5(self):
+        return self._precision_at_rank_5
+
+    @property
+    def prediction_similarities(self):
+        return self.prediction_similarities
+
+    @property
+    def predicted_words(self):
+        return self._predicted_words
