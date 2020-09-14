@@ -173,7 +173,8 @@ method used to create splits in directories, one relation in a directory, three 
 """
 
 
-def make_splits(data_path, out_path, size_train=0.6, size_test=0.2):
+def make_splits(data_path, out_path, size_train=0.6, size_test=0.2, wm='w'):
+    write_method = wm
     relations, word1, word2 = read_deriv(data_path)
     data = [(r, w1, w2) for r, w1, w2 in zip(relations, word1, word2)]
 
@@ -184,22 +185,30 @@ def make_splits(data_path, out_path, size_train=0.6, size_test=0.2):
     train = data[:train_length]
     val = data[train_length:train_length + test_length]
     test = data[train_length + test_length:]
-    with open(out_path + '_train.csv', 'w') as trf:
+    with open(out_path + '_train.csv', write_method) as trf:
         writer = csv.writer(trf, delimiter='\t')
-        writer.writerow(("relation", "word1", "word2"))
+        if write_method =='w':
+            writer.writerow(("relation", "word1", "word2"))
         for l in train:
             writer.writerow((l[0], l[1], l[2]))
-    with open(out_path + '_val.csv', 'w') as vf:
+    with open(out_path + '_val.csv',write_method) as vf:
         writer = csv.writer(vf, delimiter='\t')
-        writer.writerow(("relation", "word1", "word2"))
+        if write_method == 'w':
+            writer.writerow(("relation", "word1", "word2"))
         for l in val:
             writer.writerow((l[0], l[1], l[2]))
-    with open(out_path + '_test.csv', 'w') as tef:
+    with open(out_path + '_test.csv', write_method) as tef:
         writer = csv.writer(tef, delimiter='\t')
-        writer.writerow(("relation", "word1", "word2"))
+        if write_method == 'w':
+            writer.writerow(("relation", "word1", "word2"))
         for l in test:
             writer.writerow((l[0], l[1], l[2]))
 
+
+def make_splits_in_one(directory, out_path,size_train, size_test):
+    for fn in os.listdir(directory):
+        path = os.path.join(directory, fn)
+        make_splits(path, out_path, size_train, size_test, wm='a')
 
 def make_splits_in_dir(directory, out_path, size_train, size_test):
     for fn in os.listdir(directory):
@@ -209,12 +218,13 @@ def make_splits_in_dir(directory, out_path, size_train, size_test):
 
         out = os.path.join(new_path, fn.strip('.csv'))
         # out =  os.path.join(out_path, new_dir, str(fn.strip('csv')))
-        make_splits(path, out, size_train, size_test)
+        make_splits(path, out, size_train, size_test, wm='w')
 
 def shorten_files(path_in, path_out, length):
     df_in = pd.read_csv(path_in, delimiter='\t')
     df_in = df_in.sample(frac=1)[:length]
-    df_in.to_csv(path_out, sep='\t')
+
+    df_in.to_csv(path_out, sep='\t', index=False)
 
 
 def main():
@@ -263,10 +273,12 @@ def main():
         o_p = os.path.join(path_out, d)
         shorten_files(p_f, o_p, 558)
     """
-    data_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_relation_files_short'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/split_relations_short'
-    make_splits_in_dir(data_path, out_path, size_train = 0.6, size_test = 0.2)
-
+    #data_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_relation_files_short'
+    #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_split_relations_short'
+    #make_splits_in_dir(data_path, out_path, size_train = 0.6, size_test = 0.2)
+    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_relation_files_short'
+    out_t ='/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/for_relation_models/one'
+    make_splits_in_one(path, out_t, 0.6, 0.2)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
-from data_reader import SimpleDataLoader, read_deriv, FeatureExtractor
-from model import BasicFeedForward
+from data_reader import SimpleDataLoader, read_deriv, FeatureExtractor, create_label_encoder
+from model import BasicFeedForward, RelationFeedForward
 from torch import optim
 import torch.nn as nn
 import torch
@@ -8,14 +8,18 @@ import os
 import argparse
 import toml
 import csv
+from utils import make_vocabulary_matrix
 from rank_evaluation import Ranker
 from sklearn.metrics.pairwise import cosine_similarity
+
+
+
+
 
 
 def train(train_loader, val_loader, model, model_path, nr_epochs, patience):
     optimizer = optim.Adam(model.parameters())  # or make an if statement for choosing an optimizer
     current_patience = patience
-    best_epoch = 0
     # train_loss = 0.0
     best_cos = 0.0
     best_model = None
@@ -50,7 +54,6 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience):
 
         if mean_cos > best_cos:
             current_patience = patience
-            best_epoch = epoch
             best_model = model
             best_cos = mean_cos
         else:
@@ -75,6 +78,7 @@ def save_model(model, path):
 
 def predict(model_path, data_loader):
     model = torch.load(model_path)
+    print("MODEL", model_path)
     model.eval()
     predictions = []
     true_word_forms = []
@@ -89,15 +93,6 @@ def predict(model_path, data_loader):
 
     return predictions, true_word_forms
 
-    # sims = []
-    # print("LENGHTS", len(predictions), len(true_word_forms))
-    # for p, t in zip(predictions, true_word_forms):
-    #     print("T", t)
-    #     emb2 = extr.get_embedding(t)
-    #     print(p.shape, emb2.shape)
-    #     sims.append(cosine_similarity(p.reshape(1, -1),emb2.reshape(1, -1)))
-    # print(sims)
-
 
 def save_predictions(path, predictions):
     np.save(file=path, arr=np.array(predictions), allow_pickle=True)
@@ -107,19 +102,7 @@ def evaluate():
     pass
 
 
-def make_vocabulary_matrix(feature_extractor, embedding_dim):
-    vocabulary = feature_extractor.vocab.words
-    lab2idx = {word: i + 1 for i, word in enumerate(vocabulary)}
-    lab2idx['UNK'] = 0
-    # dict(zip(self.vocabulary, range(len(self.vocabulary)))) #dict with vocabulary and indices
-    idx2lab = {i: word for word, i in lab2idx.items()}
-    vocabulary_matrix = np.zeros((len(vocabulary) + 1, embedding_dim))  # matrix with whole vocabulary
-    vocabulary_matrix[0] = np.random.rand(1, embedding_dim)
 
-    for i in range(len(vocabulary)):
-        vocabulary_matrix[i + 1] = feature_extractor.get_embedding(vocabulary[i])
-
-    return vocabulary_matrix, lab2idx, idx2lab
 
 
 def main():
@@ -173,13 +156,16 @@ def main():
         val_l = torch.utils.data.DataLoader(data_val, batch_size=config['batch_size'])
         test_l = torch.utils.data.DataLoader(data_test, batch_size=config['batch_size'])
         # input_dim, hidden_dim, label_nr, dropout_rate=0, non_lin=True, function='sigmoid', layers=1
+
         model = BasicFeedForward(input_dim=config['embedding_dim'], hidden_dim=config['hidden_dim'],
-                                  label_nr=config['embedding_dim'], dropout_rate=config['dropout'],
-                                  non_lin=config['non_linearity'], function=config['non_linearity_function'], layers=config['nr_layers'])
+                                      label_nr=config['embedding_dim'], dropout_rate=config['dropout'],
+                                      non_lin=config['non_linearity'], function=config['non_linearity_function'], layers=config['nr_layers'])
+
 
         train(train_l, val_l, model, mod_path, config['nr_epochs'], config['patience'])
 
         predictions, target_word_forms = predict(mod_path, test_l)
+
         save_predictions(pred_path, predictions)
         ranker = Ranker(path_predictions=pred_path, target_words=target_word_forms, vocabulary_matrix=vocabulary_matrix,
                         lab2idx=lab2idx, idx2lab=idx2lab, path_results=res_path)

@@ -20,7 +20,7 @@ class Ranker:
         self._reciprank = self.reciprocal_rank(self.ranks)
 
 
-        self.save_metrics(self.target_words,self.ranks, self.quartiles, self.reciprank,self.preds_sims)
+        self.save_metrics(self.target_words,self.ranks, self.reciprank,self.preds_sims)
 
 
     def get_rank(self):
@@ -98,7 +98,7 @@ class Ranker:
         return quartiles, "%.2f%% of ranks = 1; %.2f%% of ranks <=5" % (
             (100 * leq1 / float(len(sorted_data))), (100 * leq5 / float(len(sorted_data))))
 
-    def save_metrics(self, target_words, ranks, q, rr, preds_sims):
+    def save_metrics(self, target_words, ranks,  rr, preds_sims):
         with open(self.path_results, 'w') as file:
             writer = csv.writer(file, delimiter="\t")
             writer.writerow(("target_word", "rank", "recip_rank", "similarity"))

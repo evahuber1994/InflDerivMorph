@@ -72,6 +72,50 @@ class SimpleDataLoader(Dataset):
     def feature_extractor(self):
         return self._feature_extractor
 
+class RelationsDataLoader(Dataset):
+    def __init__(self, feature_extractor, word1, word2, relations, encoder):
+        self._feature_extractor = feature_extractor
+        self._word1 = word1  # list of words
+        self._word2 = word2 #list of derived words
+        self._relations = relations
+        self._encoder = encoder
+        self._samples = self.produce_samples()
+
+    def produce_samples(self):
+        return [{'w1': self.feature_extractor.get_embedding(x), 'w2':self.feature_extractor.get_embedding(y), 'rel':self.encoder.transform(z), 'w1_form': x, 'w2_form': y} for x, y,z in zip(self.word1, self.word2, self.relations)]
+
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        return self.samples[idx]
+
+
+
+    @property
+    def word1(self):
+        return self._word1
+
+    @property
+    def relations(self):
+        return self._relations
+    @property
+    def samples(self):
+        return self._samples
+
+    @property
+    def word2(self):
+        return self._word2
+
+    @property
+    def feature_extractor(self):
+        return self._feature_extractor
+
+    @property
+    def encoder(self):
+        return self._encoder
+
 
 class FeatureExtractor:
     def __init__(self, path_to_embeddings, embedding_dim):
