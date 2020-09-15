@@ -102,11 +102,6 @@ def save_predictions(path, predictions):
     np.save(file=path, arr=np.array(predictions), allow_pickle=True)
 
 
-def evaluate():
-    pass
-
-
-
 
 
 def main():
@@ -169,7 +164,7 @@ def main():
         predictions, target_word_forms = predict(config['model_path'], test_l)
 
         save_predictions(pred_path, predictions)
-        ranker = Ranker(path_predictions=pred_path, target_words=target_word_forms, vocabulary_matrix=vocabulary_matrix,
+        ranker = Ranker(path_predictions=pred_path, target_words=target_word_forms, relations=None, vocabulary_matrix=vocabulary_matrix,
                         lab2idx=lab2idx, idx2lab=idx2lab)
         if config['save_detailed']:
             fine_grained = config['out_path'] + str(file)

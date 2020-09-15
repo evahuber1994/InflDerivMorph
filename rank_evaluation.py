@@ -5,7 +5,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import random
 from sklearn.metrics import f1_score, accuracy_score
 class Ranker:
-    def __init__(self, path_predictions, target_words, vocabulary_matrix, lab2idx, idx2lab):
+    def __init__(self, path_predictions, target_words, relations, vocabulary_matrix, lab2idx, idx2lab):
         self._vocabulary_matrix = vocabulary_matrix
         self._lab2idx = lab2idx
         self._idx2lab = idx2lab
@@ -14,13 +14,33 @@ class Ranker:
 
         self._target_words = target_words
 
-        self._ranks, gold_sims, self._preds_sims, self._predicted_words = self.get_rank()
+        if relations is not None:
+            self._relations = relations
+            self._ranks, gold_sims, self._preds_sims, self._predicted_words, self._relations_predictions = self.get_rank()
+            dict_relations = dict()
+            for rank, rel in zip(self.relations_predictions):
+                if rel not in dict_relations:
+                    dict_relations[rel] = [rank]
+                else:
+                    dict_relations[rel].append(rank)
+            self._dict_results_per_relation = dict()
+            for k,v in dict_relations.items():
+                prec5 = self.precision_at_rank(5, v)
+                prec1 = self.precision_at_rank(1, v)
+                self._dict_results_per_relation[k] = (prec5, prec1)
+
+        else:
+            self._ranks, gold_sims, self._preds_sims, self._predicted_words = self.get_rank()
         self._quartiles = self.calculate_quartiles(self.ranks)
         self._reciprank = self.reciprocal_rank(self.ranks)
 
+
+        #for all ranks it calculates precision at rank 5 and 1
         self._precision_at_rank_5 = self.precision_at_rank(5, self.ranks)
         self._precision_at_rank_1 = self.precision_at_rank(1, self.ranks)
 
+        if relations is not None:
+            self._relations = relations
         #self.save_metrics(self.target_words,self.ranks, self.reciprank,self.preds_sims)
 
 
@@ -29,7 +49,7 @@ class Ranker:
         gold_similarities = []
         prediction_similarities = []
         predicted_words = []
-
+        all_relations = []
         #predicted_attribute = self.index2label[np.argmax(composed_attributes_similarity)]
         #predicted_labels.append(predicted_attribute)
         #target_ids = [self.lab2idx[lab] for lab in self.target_words]
@@ -64,10 +84,14 @@ class Ranker:
             print("items at higher ranks than target", rank)
             #self.save_ranks(higher_ranks.tolist(), target_ids[i])
             #ranks.append(len(higher_ranks) + 1)
+            all_relations.append(self.relations[i])
             if rank > 100:
                 rank = 100
             ranks.append(rank)
-        return ranks, gold_similarities, prediction_similarities, predicted_words
+        if self.relations is not None:
+            return ranks, gold_similarities, prediction_similarities, predicted_words, all_relations
+        else:
+            return ranks, gold_similarities, prediction_similarities, predicted_words
     @staticmethod
     def precision_at_rank(k, ranks):
         """
@@ -155,7 +179,9 @@ class Ranker:
         return self._idx2lab
 
 
-
+    @property
+    def relations(self):
+        return self._relations
     @property
     def reciprank(self):
         return self._reciprank
@@ -192,3 +218,11 @@ class Ranker:
     @property
     def predicted_words(self):
         return self._predicted_words
+
+    @property
+    def relations_predictions(self):
+         return self._relations_predictions
+
+    @property
+    def dict_results_per_relation(self):
+         return self._dict_results_per_relation

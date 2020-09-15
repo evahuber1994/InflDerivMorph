@@ -85,7 +85,7 @@ class RelationsDataLoader(Dataset):
         self._samples = self.produce_samples()
 
     def produce_samples(self):
-        return [{'w1': self.feature_extractor.get_embedding(x), 'w2':self.feature_extractor.get_embedding(y), 'rel':self.encoder.transform([z]), 'w1_form': x, 'w2_form': y} for x, y,z in zip(self.word1, self.word2, self.relations)]
+        return [{'w1': self.feature_extractor.get_embedding(x), 'w2':self.feature_extractor.get_embedding(y), 'rel':self.encoder.transform([z]), 'w1_form': x, 'w2_form': y, 'rel_form':z} for x, y,z in zip(self.word1, self.word2, self.relations)]
 
 
     def __len__(self):
