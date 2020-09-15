@@ -26,6 +26,7 @@ def cosine_distance_loss(target_phrase, computed_phrase, dim=1, normalize=False)
     """
     Computes the cosine distance between two given phrases.
     """
+
     assert target_phrase.shape == computed_phrase.shape, "shapes of original and composed phrase have to be the same"
     if normalize:
         target_phrase = F.normalize(target_phrase, p=2, dim=dim)

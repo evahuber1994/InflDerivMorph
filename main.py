@@ -23,12 +23,12 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience, loss
     # train_loss = 0.0
     best_cos = 0.0
     best_model = None
-    if loss_type == 'cosine_distance':
-        loss = cosine_distance_loss()
-    elif loss_type == 'mse':
+    valid_losses = []
+    assert loss_type == 'cosine_distance' or loss_type == 'mse', "loss type has to be either \' cosine distance\' or \'mse\'"
+
+    if loss_type == 'mse':
         loss = nn.MSELoss()
-    else:
-        raise Exception("invalid loss type given, has to be \'cosine_distance\' or \'mse\'")
+
     cos = nn.CosineSimilarity(dim=1, eps=1e-6)
     total_cos_similarities = []
 
@@ -39,7 +39,11 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience, loss
         # for word1, word2, labels in train_loader:
         for batch in train_loader:
             out = model(batch['w1'])
-            out_loss = loss(out, batch['w2'])
+            if loss_type == 'mse':
+                out_loss = loss(out, batch['w2'])
+            else:
+                out_loss = cosine_distance_loss(out, batch['w2'])
+
             out_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
@@ -48,8 +52,12 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience, loss
         model.eval()
         for batch in val_loader:
             out = model(batch['w1'])
-            val_loss = loss(out, batch['w2'])
-            #valid_losses.append(loss.item())
+            if loss_type == 'mse':
+                val_loss = loss(out, batch['w2'])
+            else:
+                val_loss = cosine_distance_loss(out, batch['w2'])
+
+            valid_losses.append(val_loss.item())
             cosines = cos(out, batch['w2'])
             val_cos_sim.append(sum(cosines) / len(cosines))
 
@@ -66,6 +74,7 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience, loss
             try:
                 save_model(best_model, model_path)
                 print("stopped after epoch {}, cosine similarity {}".format(epoch, best_cos))
+                #print("validation loss", str(valid_losses))
                 break
             except:
                 print("could not save model, model is none")
@@ -73,6 +82,7 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience, loss
 
     if current_patience > 0:
         print("finishes after all epochs, cosine similarity {}".format(best_cos))
+        #print("validation loss", str(valid_losses))
         save_model(best_model, model_path)
 
 
@@ -174,15 +184,15 @@ def main():
         #average_rank = sum(ranker.ranks)/len(ranker.ranks)
         #average_rr = sum(ranker.reciprank)/len(ranker.reciprank)
         #average_sim = sum(ranker.preds_sims)/len(ranker.preds_sims)
-        acc, f1 = ranker.performance_metrics()
-        dict_results[str(file)] = (ranker.precision_at_rank_1,ranker.precision_at_rank_5, acc, f1)
+
+        dict_results[str(file)] = (ranker.precision_at_rank_1,ranker.precision_at_rank_5)
 
     out_summary_path = os.path.join(config['out_path'], "results_all.csv")
     with open(out_summary_path, 'w') as file:
         writer = csv.writer(file, delimiter="\t")
-        writer.writerow(("relation", "precision_at_rank1", "precision_at_rank5", "accuracy", "f1"))
+        writer.writerow(("relation", "precision_at_rank1", "precision_at_rank5"))
         for k,v in dict_results.items():
-            writer.writerow((k,v[0], v[1], v[2], v[3]))
+            writer.writerow((k,v[0], v[1]))
     """
     out_summary_path = os.path.join(config['out_path'], "summary.csv")
 
@@ -202,40 +212,7 @@ def main():
     """
         ###save average of all models
 
-    # if file endswith train.csv if file endswith
-
-    # path_train = 'dNA22_train.csv'
-    # path_val = 'dNA22_val.csv'
-    # path_test = 'dNA22_test.csv'
-    # embs = 'word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
-    # embedding_dim = 200
-    # epochs = 100
-    # patience = 10
-    # batch_size = 12
     #
-    # _, word1_train, word2_train = read_deriv(path_train)
-    # _, word1_val, word2_val = read_deriv(path_val)
-    # _, word1_test, word2_test = read_deriv(path_test)
-    # data_train = SimpleDataLoader(feature_extractor, word1_train, word2_train)
-    # data_val = SimpleDataLoader(feature_extractor, word1_val, word2_val)
-    # data_test = SimpleDataLoader(feature_extractor, word1_test, word2_test)
-    # train_l = torch.utils.data.DataLoader(data_train, batch_size=batch_size)
-    # val_l = torch.utils.data.DataLoader(data_val, batch_size=batch_size)
-    # test_l = torch.utils.data.DataLoader(data_test, batch_size=batch_size)
-    # # input_dim, hidden_dim, label_nr, dropout_rate=0, non_lin=True, function='sigmoid', layers=1
-    # model1 = BasicFeedForward(embedding_dim, embedding_dim, embedding_dim, non_lin=True)
-    # model_path = 'output/model/model1'
-    # # train_loader, val_loader, model, model_path, nr_epochs, patience
-    # train(train_l, val_l, model1, model_path, epochs, patience)
-    #
-    # predictions, target_word_forms = predict(model_path, test_l)
-    # path_pred = 'output/preds.npy'
-    # save_predictions(path_pred, predictions)
-    # # save predictions
-    # path_results = 'output/results.txt'
-    # # path_pred = os.path.join(path_pred, '.npy')
-    # ranker = Ranker(path_predictions=path_pred, target_words=target_word_forms, vocabulary_matrix=vocabulary_matrix,
-    #                 lab2idx=lab2idx, idx2lab=idx2lab, path_results=path_results)
 
 
 if __name__ == "__main__":

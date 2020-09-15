@@ -13,7 +13,10 @@ class BasicFeedForward(nn.Module):
 
         self._hidden_layer = OrderedDict()
         for i in range(1, layers + 1):
-            self._hidden_layer[str(i) + "LF"] = nn.Linear(input_dim, hidden_dim)
+            if i > 1:
+                self._hidden_layer[str(i) + "LF"] = nn.Linear(hidden_dim, hidden_dim)
+            else:
+                self._hidden_layer[str(i) + "LF"] = nn.Linear(input_dim, hidden_dim)
             if non_lin:
                 self._hidden_layer[str(i) + "NL"] = nn.Sigmoid()
             self._hidden_layer[str(i) + "D"] = nn.Dropout(p=self._dropout_rate)
@@ -34,10 +37,13 @@ class RelationFeedForward(nn.Module):
         self._layers = layers
         self._hidden_layer = OrderedDict()
 
-        self._input_layer =  nn.Linear(emb_dim + relation_nr, hidden_dim)
+        #self._input_layer =  nn.Linear(emb_dim + relation_nr, hidden_dim)
         self._relation_embeddings =  nn.Embedding(relation_nr, emb_dim_rels)
         for i in range(1, layers + 1):
-            self._hidden_layer[str(i) + "LF"] = nn.Linear(emb_dim_rels + emb_dim, hidden_dim)
+            if i > 1:
+                self._hidden_layer[str(i) + "LF"] = nn.Linear(hidden_dim, hidden_dim)
+            else:
+                self._hidden_layer[str(i) + "LF"] = nn.Linear(emb_dim + emb_dim_rels, hidden_dim)
             if non_lin:
                 self._hidden_layer[str(i) + "NL"] = nn.Sigmoid()
             self._hidden_layer[str(i) + "D"] = nn.Dropout(p=self._dropout_rate)

@@ -2,7 +2,7 @@ import argparse
 import toml
 import torch
 from model import RelationFeedForward
-from utils import make_vocabulary_matrix, shuffle_lists
+from utils import make_vocabulary_matrix, shuffle_lists, cosine_distance_loss
 from data_reader import create_label_encoder, FeatureExtractor, RelationsDataLoader, read_deriv
 import os
 from torch import optim
@@ -10,13 +10,16 @@ import torch.nn as nn
 import numpy as np
 from rank_evaluation import Ranker
 import csv
-def train(train_loader, val_loader, model, model_path, nr_epochs, patience):
+def train(train_loader, val_loader, model, model_path, nr_epochs, patience, loss_type):
     optimizer = optim.Adam(model.parameters())  # or make an if statement for choosing an optimizer
     current_patience = patience
     # train_loss = 0.0
     best_cos = 0.0
     best_model = None
-    loss = nn.MSELoss()
+    assert loss_type == 'cosine_distance' or loss_type == 'mse', "loss type has to be either \' cosine distance\' or \'mse\'"
+
+    if loss_type == 'mse':
+        loss = nn.MSELoss()
     cos = nn.CosineSimilarity(dim=1, eps=1e-6)
     total_cos_similarities = []
     for epoch in range(1, nr_epochs + 1):
@@ -26,15 +29,18 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience):
         val_cos_sim = []
         for batch in train_loader:
             out = model(batch)
-            out_loss = loss(out, batch['w2'])
+            if loss_type == 'mse':
+                out_loss = loss(out, batch['w2'])
+            else:
+                out_loss = cosine_distance_loss(out, batch['w2'])
             out_loss.backward()
             optimizer.step()
             optimizer.zero_grad()
         model.eval()
         for batch in val_loader:
             out = model(batch)
-            val_loss = loss(out, batch['w2'])
-            # valid_losses.append(loss.item())
+            #val_loss = loss(out, batch['w2'])
+            ## valid_losses.append(loss.item())
             cosines = cos(out, batch['w2'])
             val_cos_sim.append(sum(cosines) / len(cosines))
         mean_cos = sum(val_cos_sim) / len(val_cos_sim)
@@ -86,9 +92,15 @@ def save_predictions(path, predictions):
 
 def save_embeddings(path, model_path, encoder):
     model = torch.load(model_path)
+    weights = model.relation_embeddings.weight
+    print("type weights", type(weights))
+    print("shape weights", weights.shape)
+    #torch.save(model.relation_embeddings, path)
+
     with open(path, 'w') as file:
-        for i, emb in enumerate(model.relation_embeddings):
-            file.write("{} \t {}".format(encoder.transform(i), emb))
+        for i, emb in enumerate(weights):
+            file.write("{} \t {}".format(encoder.inverse_transform([i]), emb))
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -108,7 +120,7 @@ def main():
     val_path = config['val_path']
 
     emb_path = os.path.join(config['out_path'], "embeddings")
-    pred_path = os.path.join(config['out_path'], "predictions")
+    pred_path = os.path.join(config['out_path'], "predictions.npy")
 
 
     relation_train, word1_train, word2_train = read_deriv(train_path, shuffle=True)
@@ -128,8 +140,8 @@ def main():
                                 hidden_dim=config['hidden_dim'], relation_nr=len(all_relations),
                                 dropout_rate=config['dropout_rate'], non_lin=config['non_linearity'], function=config['non_linearity_function'],
                                 layers=config['nr_layers'])
-
-    train(train_l, val_l, model, config['model_path'], config['nr_epochs'], config['patience'])
+    print("number of relations:", len(all_relations))
+    train(train_l, val_l, model, config['model_path'], config['nr_epochs'], config['patience'], config['loss'])
     predictions, target_word_forms, relations = predict(config['model_path'], test_l)
     save_predictions(pred_path, predictions)
     save_embeddings(emb_path, config['model_path'], encoder)
@@ -142,24 +154,24 @@ def main():
     acc_at_1 = ranker.precision_at_rank_1
     acc_at_5 = ranker.precision_at_rank_5
     quartiles = ranker.quartiles
-    acc, f1 = ranker.performance_metrics()
     acc_per_relation = ranker.dict_results_per_relation
     path_out = os.path.join(config['out_path'], "_summary.csv")
     path_out2 = os.path.join(config['out_path'], "_per_relation.csv")
     with open(path_out, 'w') as file:
         writer = csv.writer(file, delimiter='\t')
-        writer.writerow(("acc_at_1", "acc_at_5", "quartiles", "acc", "f1"))
-        writer.writerow((acc_at_1, acc_at_5, quartiles, acc, f1))
+        writer.writerow(("acc_at_1", "acc_at_5", "quartiles"))
+        writer.writerow((acc_at_1, acc_at_5, quartiles))
     with open(path_out2, 'w') as file:
         writer = csv.writer(file, delimiter='\t')
         writer.writerow(("relation", "acc_at_1", "acc_at_5"))
-        for k,v in acc_per_relation:
+        for k,v in acc_per_relation.items():
             writer.writerow((k, v[0], v[1]))
 
-    average_rank = sum(ranker.ranks) / len(ranker.ranks)
-    average_rr = sum(ranker.reciprank) / len(ranker.reciprank)
-    average_sim = sum(ranker.preds_sims) / len(ranker.preds_sims)
-    print("avg rank: {}, avg rr: {}, avg sim: {}".format(average_rank, average_rr, average_sim))
+    print("prediction sim", type(ranker.prediction_similarities), ranker.prediction_similarities)
+    #average_rank = sum(ranker.ranks) / len(ranker.ranks)
+    #average_rr = sum(ranker.reciprank) / len(ranker.reciprank)
+    #average_sim = sum(ranker.prediction_similarities) / len(ranker.prediction_similarities)
+    #print("avg rank: {}, avg rr: {}, avg sim: {}".format(average_rank, average_rr, average_sim))
 
 
 if __name__ == '__main__':
