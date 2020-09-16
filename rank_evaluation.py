@@ -17,14 +17,18 @@ class Ranker:
         if relations is not None:
             self._relations = relations
             self._ranks, gold_sims, self._preds_sims, self._relations_predictions = self.get_rank(rel=True)
-            dict_relations = dict()
-            for rank, rel in zip(self.ranks,self.relations):
-                if rel not in dict_relations:
-                    dict_relations[rel] = [rank]
+            self._dict_relations = dict()
+            self._list_target_words = []
+            for rank, rel, tw in zip(self.ranks,self.relations, self.target_words):
+                if rel not in self._dict_relations:
+                    self._dict_relations[rel] = [rank]
                 else:
-                    dict_relations[rel].append(rank)
+                    self._dict_relations[rel].append(rank)
+                self._list_target_words.append((rel, tw, rank))
+
             self._dict_results_per_relation = dict()
-            for k,v in dict_relations.items():
+
+            for k,v in self._dict_relations.items():
                 prec5 = self.precision_at_rank(5, v)
                 prec1 = self.precision_at_rank(1, v)
                 self._dict_results_per_relation[k] = (prec5, prec1)
@@ -143,16 +147,22 @@ class Ranker:
             for inst in zip(self.target_words, self.ranks, self.reciprank, self.prediction_similarities):
                 writer.writerow(inst)
 
+    def save_ranks(self, path):
+        with open(path, 'w') as file:
+            writer = csv.writer(file, delimiter="\t")
+            writer.writerow(("relation", "target_word", "rank"))
+            for word in self.list_target_words:
+                writer.writerow(word)
 
     def save_fine_metrics(self):
         pass
-
+    """
     def save_ranks(self, ranks, target):
         #print("r", ranks)
         #print("t", target)
         ranks_words = [self.idx2lab[idx] for idx in ranks]
         return ranks_words.append(self.idx2lab[target])
-
+    """
     @property
     def vocabulary_matrix(self):
         return self._vocabulary_matrix
@@ -210,3 +220,11 @@ class Ranker:
     @property
     def dict_results_per_relation(self):
          return self._dict_results_per_relation
+
+    @property
+    def dict_relations(self):
+        return self._dict_relations
+
+    @property
+    def list_target_words(self):
+        return self._list_target_words

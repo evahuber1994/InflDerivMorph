@@ -125,7 +125,7 @@ class FeatureExtractor:
         if path_to_embeddings.endswith("fifu"):
             self._embeds = finalfusion.load_finalfusion(path_to_embeddings)
         elif path_to_embeddings.endswith("bin"):
-            self._embeds = finalfusion.load_word2vec(path_to_embeddings)
+            self._embeds = finalfusion.load_fasttext(path_to_embeddings)
         elif path_to_embeddings.endswith("w2v"):
             self._embeds = finalfusion.load_word2vec(path_to_embeddings)
         elif path_to_embeddings.endswith("txt"):

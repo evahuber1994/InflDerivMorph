@@ -8,6 +8,7 @@ class BasicFeedForward(nn.Module):
         super(BasicFeedForward, self).__init__()
         self._label_nr = label_nr
         self._dropout_rate = dropout_rate
+
         self._non_lin = non_lin
         self._layers = layers
 
@@ -25,7 +26,7 @@ class BasicFeedForward(nn.Module):
         self._model = nn.Sequential(self._hidden_layer)  # second argument is output layer
 
     def forward(self, batch):
-        return self._model(batch)
+        return self._model(batch['w1'])
 
 class RelationFeedForward(nn.Module):
     def __init__(self, emb_dim, emb_dim_rels, hidden_dim, relation_nr, dropout_rate=0, non_lin=True, function='sigmoid', layers=1):
@@ -36,28 +37,30 @@ class RelationFeedForward(nn.Module):
         self._non_lin = non_lin
         self._layers = layers
         self._hidden_layer = OrderedDict()
-
-        #self._input_layer =  nn.Linear(emb_dim + relation_nr, hidden_dim)
         self._relation_embeddings =  nn.Embedding(relation_nr, emb_dim_rels)
+        if function == 'sigmoid':
+            non_lin_function = nn.Sigmoid()
+        elif function == 'relu':
+            non_lin_function = nn.ReLU()
+        elif function == 'tanh':
+            non_lin_function = nn.Tanh()
+        else:
+            raise Exception("invalid non-linearity function")
+
         for i in range(1, layers + 1):
             if i > 1:
                 self._hidden_layer[str(i) + "LF"] = nn.Linear(hidden_dim, hidden_dim)
             else:
                 self._hidden_layer[str(i) + "LF"] = nn.Linear(emb_dim + emb_dim_rels, hidden_dim)
-            if non_lin:
-                self._hidden_layer[str(i) + "NL"] = nn.Sigmoid()
+            if self._non_lin == True:
+                self._hidden_layer[str(i) + "NL"] = non_lin_function
             self._hidden_layer[str(i) + "D"] = nn.Dropout(p=self._dropout_rate)
 
         self._hidden_layer['output'] = nn.Linear(hidden_dim, emb_dim)
         self._model = nn.Sequential(self._hidden_layer)  # second argument is output layer
 
     def forward(self,batch):
-        #print("relation", batch['rel'], "w1", "w1 form and shape of embedding", batch['w1_form'], batch["w1"].shape )
-        #print("shape of rel embedding",  self._relation_embeddings(batch['rel']).shape)
-
-        #print(batch['w1'], batch['rel'])
-        concat_vector = concatenate(batch['w1'], self._relation_embeddings(batch['rel'].squeeze()), 1)
-
+        concat_vector = concatenate(batch['w1'].to(batch['device']), self._relation_embeddings(batch['rel'].squeeze().to(batch['device'])), 1)
         return self.model(concat_vector)
 
 

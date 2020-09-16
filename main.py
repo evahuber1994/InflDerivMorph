@@ -38,7 +38,7 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience, loss
         val_cos_sim = []
         # for word1, word2, labels in train_loader:
         for batch in train_loader:
-            out = model(batch['w1'])
+            out = model(batch)
             if loss_type == 'mse':
                 out_loss = loss(out, batch['w2'])
             else:
@@ -51,7 +51,7 @@ def train(train_loader, val_loader, model, model_path, nr_epochs, patience, loss
         # validation loop over validation batches
         model.eval()
         for batch in val_loader:
-            out = model(batch['w1'])
+            out = model(batch)
             if loss_type == 'mse':
                 val_loss = loss(out, batch['w2'])
             else:

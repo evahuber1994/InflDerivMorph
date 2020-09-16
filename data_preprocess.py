@@ -8,7 +8,6 @@ preprocessing file to extract all pairs that share a relation from DErivBase
 boolean in read method to indicate whether inverse relation marked by star should be added or not
 """
 
-
 class Preprocesser():
     def __init__(self, path, out_path, embedding_voc, star=True, OOV=True, threshold=80):
         self._path = path
@@ -226,6 +225,49 @@ def shorten_files(path_in, path_out, length):
 
     df_in.to_csv(path_out, sep='\t', index=False)
 
+def make_splits_balanced(path_in, path_out, train_size = 0.6, test_size= 0.2):
+    dict_relations = dict()
+    with open(path_in, 'r') as file:
+        for l in file:
+            l = l.strip()
+            if not l: continue
+            line = l.split('\t')
+            if line[0] in dict_relations:
+                dict_relations[line[0]].append((line[1], line[2]))
+            else:
+                dict_relations[line[0]] = [(line[1], line[2])]
+    train_path = path_out + "_train.csv"
+    val_path = path_out + "_val.csv"
+    test_path = path_out+ "_test.csv"
+    header = ("relation", "w1", "w2")
+    f_train = open(train_path, 'w')
+    writer_train = csv.writer(f_train, delimiter='\t')
+    writer_train.writerow(header)
+    f_val = open(val_path, 'w')
+    writer_val = csv.writer(f_val, delimiter="\t")
+    writer_val.writerow(header)
+    f_test = open(test_path, 'w')
+    writer_test = csv.writer(f_test, delimiter="\t")
+    writer_test.writerow(header)
+    for k,v in dict_relations.items():
+        train_length = int(len(v) * train_size)
+        test_length = int(len(v) * test_size)
+        train =v[:train_length]
+        val = v[train_length:train_length +test_length]
+        test = v[train_length + test_length:]
+        for w in train:
+            writer_train.writerow((k, w[0], w[1]))
+        for w in val:
+            writer_val.writerow((k, w[0], w[1]))
+        for w in test:
+            writer_test.writerow((k, w[0], w[1]))
+    f_test.close()
+    f_train.close()
+    f_val.close()
+
+
+
+
 
 def main():
     """
@@ -276,10 +318,12 @@ def main():
     #data_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_relation_files_short'
     #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_split_relations_short'
     #make_splits_in_dir(data_path, out_path, size_train = 0.6, size_test = 0.2)
-    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_relation_files_short'
-    out_t ='/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/for_relation_models/one'
-    make_splits_in_one(path, out_t, 0.6, 0.2)
-
+   # path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_relation_files_short'
+    #out_t ='/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/for_relation_models/one'
+    #make_splits_in_one(path, out_t, 0.6, 0.2)
+    path_in = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_formatted80.csv'
+    path_out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/balanced'
+    make_splits_balanced(path_in, path_out)
 
 if __name__ == "__main__":
     main()
