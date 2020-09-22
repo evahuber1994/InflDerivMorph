@@ -17,6 +17,7 @@ class Ranker:
         if relations is not None:
             self._relations = relations
             self._ranks, gold_sims, self._preds_sims, self._relations_predictions = self.get_rank(rel=True)
+            print("ranks calculated")
             self._dict_relations = dict()
             self._list_target_words = []
             for rank, rel, tw in zip(self.ranks,self.relations, self.target_words):
@@ -64,7 +65,7 @@ class Ranker:
 
         #matrix of target representations ordered
         target_repr = np.take(self.vocabulary_matrix, target_ids, axis=0)
-
+        print(target_repr.shape, len(target_ids))
 
         target_similarities = cosine_similarity(self.vocabulary_matrix, target_repr)
 

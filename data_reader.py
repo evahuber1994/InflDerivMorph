@@ -2,9 +2,13 @@ import spacy
 from torch.utils.data import Dataset
 from sklearn.preprocessing import LabelEncoder
 import torch
+import tarfile
 import finalfusion
 import numpy as np
 from utils import shuffle_lists
+import pandas as pd
+from gensim.test.utils import datapath
+from gensim.models import KeyedVectors
 """
 reads file in the format of the standard morphology file in this work 
 first column relation_type, second column base word, third column inflection/derivation
@@ -167,22 +171,45 @@ class FeatureExtractor:
     def vocab(self):
         return self._vocab
 
-
+class GensimFeatureExtractor:
+    def __init__(self, path_embeddings, dim):
+        self._embeddings = KeyedVectors.load_word2vec_format(datapath('/home/eva/master_diss/embeddings/model.bin'), binary=True)
+        print("loaded successfully")
+        #self.emb_dict = self.read_embeddings(path_embeddings)
+        #print(self.emb_dict['schön'])
+        #print(self.emb_dict['schön'])
+        #print("length voc", len(self._embeddings.wv.vocab))
+        #self.words = pd.read_table(path_embeddings, sep=" ", index_col=0)
+    #def get_embedding(self, word):
+     #   return self.words[word].as_matrix()
+    def read_embeddings(self, path):
+        emb_dict = dict()
+        o = open
+        if path.endswith('xz'):
+            o = tarfile.open
+        with o(path, 'r', encoding='latin-1') as rf:
+            for line in rf:
+                line = line.strip()
+                if line:
+                    l = line.split(" ")
+                    try:
+                        emb_dict[l[0]] = np.array([float(num) for num in l[1:]])
+                    except:
+                        print(l[0])
+        return emb_dict
 def main():
-    """
-    emb = 'de_core_news_sm'
-    path = 'data/out_threshold8.csv'
-    _, words, labels = read_deriv(path)
 
-    extractor = SimpleDataLoader(emb, words[1:10], labels[1:10])
-    for i,j in extractor:
-        print(i)"""
-    #path_emb = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/german-skipgram-mincount-30-ctx-10-dims-300.fifu'
-    path_emb = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/45/model.bin'
-    extractor = FeatureExtractor(path_emb, 300)
-    voc = extractor.vocab
-    print(type(voc))
-    print(voc.words[:10])
+    path_emb = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/45/model.fifu'
+    extractor = FeatureExtractor(path_emb, 100)
+    print(len(extractor.vocab))
+
+    path_emb = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
+    extractor2 = FeatureExtractor(path_emb, 100)
+    print(len(extractor2.vocab))
+
+
+
+
     #emb = extractor.get_embedding("schön")
 
 

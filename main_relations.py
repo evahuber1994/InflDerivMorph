@@ -151,8 +151,8 @@ def main():
     with open(args.config) as cfg_file:
         config = toml.load(cfg_file)
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
+    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device(config['device'])
     feature_extractor = FeatureExtractor(config['embeddings'], embedding_dim=config['embedding_dim'])
     print("loaded embeddings")
     vocabulary_matrix, lab2idx, idx2lab = make_vocabulary_matrix(feature_extractor, config['embedding_dim'])

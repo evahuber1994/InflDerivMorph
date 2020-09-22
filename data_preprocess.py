@@ -1,5 +1,5 @@
 import csv
-from data_reader import read_deriv, FeatureExtractor
+from data_reader import read_deriv, FeatureExtractor, GensimFeatureExtractor
 import random
 import os
 import pandas as pd
@@ -37,14 +37,18 @@ class Preprocesser():
                         element = element.strip('>')
                         element = element.split('.')[0]
                         tup = (l[i - 1], l[i + 1])
-                        if tup in word_pairs:
+                        w1 = tup[0].split('_')
+                        w2 = tup[1].split('_')
+                        pair = (w1[0], w2[0])
+                        print(pair)
+                        if pair in word_pairs:
                             continue
                         if element not in dict_relations:
-                            dict_relations[element] = [tup]
-                            word_pairs.add(tup)
+                            dict_relations[element] = [pair]
+                            word_pairs.add(pair)
                         else:
-                            dict_relations[element].append(tup)
-                            word_pairs.add(tup)
+                            dict_relations[element].append(pair)
+                            word_pairs.add(pair)
         self.write_to_fileDB(self.out_path, dict_relations)
         return dict_relations
 
@@ -58,27 +62,24 @@ class Preprocesser():
         # word_pairs = set()
         with open(output_path, 'w') as file:
             writer = csv.writer(file, delimiter='\t')
-            writer.writerow(('relation', 'w1', 'w2', 'catw1', 'catw2'))
+            writer.writerow(('relation', 'w1', 'w2'))
             pairs = 0
             for k, v in dict_relation.items():
-                count = len(v)
                 if self.oov:  # if oov is true, then skip all words that either base or derived form is not in vocabulary
                     i = 0
                     for w in v:
-                        w1 = w[0].split('_')
-                        w2 = w[1].split('_')
-                        if w1[0] not in self.embedding_voc or w2[0] not in self.embedding_voc:
+                        if w[0] not in self.embedding_voc or w[1] not in self.embedding_voc:
                             i +=1
                 if len(v)-i > self.threshold:
                     for w in v:
-                        w1 = w[0].split('_')
-                        w2 = w[1].split('_')
+                        w1 = w[0]
+                        w2 = w[1]
                         # if (w1[0], w2[0]) not in word_pairs:
                         if self.oov:  # if oov is true, then skip all words that either base or derived form is not in vocabulary
-                            if w1[0] not in self.embedding_voc or w2[0] not in self.embedding_voc:
+                            if w1 not in self.embedding_voc or w2 not in self.embedding_voc:
                                 continue
                         pairs += 1
-                        writer.writerow((k, w1[0], w2[0], w1[1], w2[1]))
+                        writer.writerow((k, w1, w2))
                         # word_pairs.add((w1[0], w2[0]))
                 else:
                     continue
@@ -236,9 +237,9 @@ def make_splits_balanced(path_in, path_out, train_size = 0.6, test_size= 0.2):
                 dict_relations[line[0]].append((line[1], line[2]))
             else:
                 dict_relations[line[0]] = [(line[1], line[2])]
-    train_path = path_out + "_train.csv"
-    val_path = path_out + "_val.csv"
-    test_path = path_out+ "_test.csv"
+    train_path = path_out + "train.csv"
+    val_path = path_out + "val.csv"
+    test_path = path_out+ "test.csv"
     header = ("relation", "w1", "w2")
     f_train = open(train_path, 'w')
     writer_train = csv.writer(f_train, delimiter='\t')
@@ -270,59 +271,10 @@ def make_splits_balanced(path_in, path_out, train_size = 0.6, test_size= 0.2):
 
 
 def main():
-    """
-    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/DErivBase-v2.0-rulePaths.txt'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/deriv_thresh80_new.csv'
-    embeddings = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
-    voc = FeatureExtractor(embeddings, 200)
 
-    # path,out_path, embedding_voc, star=True, OOV =True, threshold=80
-    prep = Preprocesser(path, out_path, voc.vocab, star=True, OOV=True, threshold=80)
-    prep.read_and_write_DB()
-    """
-    """
-    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/deriv_thresh80_new.csv'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/rf_new'
-    make_relation_files(path,out_path)
-    """
+    path_in = '/home/evahu/Documents/Master/Master_Dissertation/data_conll/INFLECTION/inf_conll_thr80.csv'
+    path_out = '/home/evahu/Documents/Master/Master_Dissertation/data_conll/INFLECTION/splits/'
 
-    #data_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/relation_files'
-    #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/DERIVATION/split_relations'
-    #make_splits_in_dir(data_path, out_path, size_train = 0.6, size_test = 0.2)
-
-    #####UNIMORPH
-    """
-    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/deu_formatted.csv'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_formatted80.csv'
-    embeddings = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
-    voc = FeatureExtractor(embeddings, 200)
-    prep = Preprocesser(path, out_path, voc.vocab, star=True, OOV=True, threshold=80)
-    dict_r = prep.read_and_write_unimorph()
-    print(dict_r['V;SBJV;PST;2;PL'])
-    """
-    #path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_formatted80.csv'
-    #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/relations'
-    #make_relation_files(path,out_path)
-
-    #data_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/relations'
-    #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/split_relations'
-    #make_splits_in_dir(data_path, out_path, size_train = 0.6, size_test = 0.2)
-    """
-    path_out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_relation_files_short'
-    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/relations'
-    for d in os.listdir(path):
-        p_f = os.path.join(path, d)
-        o_p = os.path.join(path_out, d)
-        shorten_files(p_f, o_p, 558)
-    """
-    #data_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_relation_files_short'
-    #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_split_relations_short'
-    #make_splits_in_dir(data_path, out_path, size_train = 0.6, size_test = 0.2)
-   # path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_relation_files_short'
-    #out_t ='/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/for_relation_models/one'
-    #make_splits_in_one(path, out_t, 0.6, 0.2)
-    path_in = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/inf_formatted80.csv'
-    path_out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/INFLECTION/balanced'
     make_splits_balanced(path_in, path_out)
 
 if __name__ == "__main__":
