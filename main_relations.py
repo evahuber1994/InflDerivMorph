@@ -155,8 +155,7 @@ def main():
     device = torch.device(config['device'])
     feature_extractor = FeatureExtractor(config['embeddings'], embedding_dim=config['embedding_dim'])
     print("loaded embeddings")
-    vocabulary_matrix, lab2idx, idx2lab = make_vocabulary_matrix(feature_extractor, config['embedding_dim'])
-    print("built vocabulary matrix")
+
 
     train_path = config['train_path']
     test_path = config['test_path']
@@ -185,6 +184,12 @@ def main():
     save_predictions(pred_path, predictions)
     save_embeddings(emb_path, config['model_path'], encoder, all_relations)
     print("finished writing embeddings")
+    restr = False
+    if config['restricted_vocabulary_matrix'] == "True":
+        restr = True
+
+    vocabulary_matrix, lab2idx, idx2lab = make_vocabulary_matrix(feature_extractor, config['embedding_dim'], target_word_forms, restricted=restr)
+    print("built vocabulary matrix; shape is {}".format(vocabulary_matrix.shape))
     ranker = Ranker(path_predictions=pred_path, target_words=target_word_forms, relations=relations,
                     vocabulary_matrix=vocabulary_matrix,
                     lab2idx=lab2idx, idx2lab=idx2lab)

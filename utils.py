@@ -2,8 +2,17 @@ import numpy as np
 import random
 import torch
 import torch.nn.functional as F
-def make_vocabulary_matrix(feature_extractor, embedding_dim):
-    vocabulary = feature_extractor.vocab.words
+def make_vocabulary_matrix(feature_extractor, embedding_dim, target_words, restricted):
+    if not restricted:
+        vocabulary = feature_extractor.vocab.words
+    else:
+        whole_vocabulary = feature_extractor.vocab.words
+        random.shuffle(whole_vocabulary)
+        length = int(len(whole_vocabulary)/10)
+        vocabulary = whole_vocabulary[:length]
+        for t in target_words:
+            if t not in vocabulary:
+                vocabulary.append(t)
     lab2idx = {word: i + 1 for i, word in enumerate(vocabulary)}
     lab2idx['UNK'] = 0
     # dict(zip(self.vocabulary, range(len(self.vocabulary)))) #dict with vocabulary and indices

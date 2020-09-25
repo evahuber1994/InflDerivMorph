@@ -198,11 +198,11 @@ class GensimFeatureExtractor:
                         print(l[0])
         return emb_dict
 def main():
-
+    """
     path_emb = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/45/model.fifu'
     extractor = FeatureExtractor(path_emb, 100)
     print(len(extractor.vocab))
-
+    """
     path_emb = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
     extractor2 = FeatureExtractor(path_emb, 100)
     print(len(extractor2.vocab))

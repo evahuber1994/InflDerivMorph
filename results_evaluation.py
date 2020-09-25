@@ -52,16 +52,37 @@ def offset_vectors(file_path, embedding_path, emb_dim):
 
 
 def plot_results(data_frame, name_column1, name_column2, out_path):
+    """
+    http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
+    """
     df = data_frame.sort_values(by=[name_column2],ascending=False)
     x = df[name_column1].to_numpy()
     y = df[name_column2].to_numpy()
     #
-    fig = plt.figure(figsize=(50,10))
+    #ax = plt.figure(figsize=(50,10))
+    plt.figure(figsize=(20, 13))
+
+    ax = plt.subplot(111)
+    ax.spines["top"].set_visible(False)
+    ax.spines["bottom"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.spines["left"].set_visible(False)
+    ax.get_xaxis().tick_bottom()
+    ax.get_yaxis().tick_left()
+
+    #plt.yticks(range(0, 91, 10), [str(x) + "%" for x in range(0, 91, 10)], fontsize=14)
+    plt.xticks(fontsize=10)
+    plt.xticks(rotation=90)
+    plt.plot(x,y)
+    plt.text("N;DAT;PL", 1, "Precision at rank 5", fontsize=17, ha="center")
+    #plt.text(x, y, s=11)
     #axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-    rect = [0.1, 0.1, 0.8, 0.8]
-    axes = fig.add_axes(rect)
-    axes.yaxis.label.set_size(5)
-    axes.plot(x,y)
+    #rect = [0.1, 0.1, 0.8, 0.8]
+    #axes = fig.add_axes(rect)
+    #axes.yaxis.label.set_size(5)
+    #axes.plot(x,y)
+
+
     plt.savefig(out_path)
     plt.show()
 
@@ -110,12 +131,12 @@ def tsne_plot(path_embedding, out_path):
         x.append(value[0])
         y.append(value[1])
 
-    plt.figure(figsize=(16, 16))
+    plt.figure(figsize=(22, 22))
     for i in range(len(x)):
         plt.scatter(x[i], y[i])
         plt.annotate(labels[i],
                      xy=(x[i], y[i]),
-                     xytext=(5, 2),
+                     xytext=(4, 2),
                      textcoords='offset points',
                      ha='right',
                      va='bottom')
@@ -125,12 +146,14 @@ def tsne_plot(path_embedding, out_path):
 
 
 def main():
+    path_embedding = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_final_conll/results_conll/embeddings.txt'
+    out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_final_conll/results_conll/embeddings_plot.png'
+    tsne_plot(path_embedding, out)
    #plot results
-   path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/results_combined_2/results_per_relation.csv'
-   out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/plot.png'
-   df = pd.read_csv(path, sep='\t')
-   plot_results(df, 'relation', 'acc_at_5', out)
-
+    #path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_final_conll/results_conll/results_per_relation.csv'
+    #out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_final_conll/results_conll/plot_results.png'
+    #df = pd.read_csv(path, sep='\t')
+    #plot_results(df, 'relation', 'acc_at_5', out)
 
 #path1 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/embeddings_new.txt'
     #path2 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/results_embs.csv'

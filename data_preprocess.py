@@ -95,7 +95,7 @@ class Preprocesser():
             writer.writerow(("relation", "word1", "word2"))
             for k, v in dict_relations.items():
                 if len(v) > self.threshold:
-                    print(k, len(v))
+                    #print(k, len(v))
                     for w in v:
                         writer.writerow((k, w[0], w[1]))
         return dict_relations
@@ -109,10 +109,10 @@ class Preprocesser():
                 if not l: continue
                 line = l.split('\t')
                 if ' ' in line[0] or ' ' in line[1]:
-                    print(line[1])
                     continue
                 if self.oov:  # if oov is true, then skip all words that either base or derived form is not in vocabulary
                     if line[1] not in self.embedding_voc or line[2] not in self.embedding_voc:
+                        print(line)
                         continue
                 if line[0] in dict_relations:
                     dict_relations[line[0]].append((line[1], line[2]))
@@ -251,6 +251,7 @@ def make_splits_balanced(path_in, path_out, train_size = 0.6, test_size= 0.2):
     writer_test = csv.writer(f_test, delimiter="\t")
     writer_test.writerow(header)
     for k,v in dict_relations.items():
+        random.shuffle(v)
         train_length = int(len(v) * train_size)
         test_length = int(len(v) * test_size)
         train =v[:train_length]
@@ -267,15 +268,56 @@ def make_splits_balanced(path_in, path_out, train_size = 0.6, test_size= 0.2):
     f_val.close()
 
 
+def combine_files(deriv_path, infl_path, out_path):
 
+    tr_d = os.path.join(deriv_path, "train.csv")
+    val_d = os.path.join(deriv_path, "val.csv")
+    te_d = os.path.join(deriv_path, "test.csv")
+
+    tr_i = os.path.join(infl_path, "train.csv")
+    val_i = os.path.join(infl_path, "val.csv")
+    te_i = os.path.join(infl_path, "test.csv")
+
+    tr_out = os.path.join(out_path, 'combined_train.csv')
+    val_out = os.path.join(out_path, 'combined_val.csv')
+    te_out = os.path.join(out_path, 'combined_test.csv')
+
+    tr_der = pd.read_csv(tr_d, sep="\t")
+    val_der = pd.read_csv(val_d, sep="\t")
+    te_der = pd.read_csv(te_d, sep="\t")
+
+    tr_inf = pd.read_csv(tr_i, sep="\t")
+    val_inf = pd.read_csv(val_i, sep="\t")
+    te_inf = pd.read_csv(te_i, sep="\t")
+
+    train = pd.concat([tr_der, tr_inf])
+    val = pd.concat([val_der, val_inf])
+    test = pd.concat([te_der, te_inf])
+
+    train.to_csv(tr_out, sep='\t', index=False)
+    val.to_csv(val_out, sep='\t', index=False)
+    test.to_csv(te_out, sep='\t', index=False)
 
 
 def main():
+    """
+    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
+    extr = FeatureExtractor(path, embedding_dim=200)
 
-    path_in = '/home/evahu/Documents/Master/Master_Dissertation/data_conll/INFLECTION/inf_conll_thr80.csv'
-    path_out = '/home/evahu/Documents/Master/Master_Dissertation/data_conll/INFLECTION/splits/'
+    path_in = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs/INFLECTION/deu_formatted.csv'
+    path_out = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs/INFLECTION/inflection_serverembs.csv'
+    prep = Preprocesser(path_in, path_out, extr.vocab)
+    prep.read_and_write_unimorph()
+    """
+    #path_in = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs/INFLECTION/inflection_serverembs.csv'
+    #path_out = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs/INFLECTION/splits/'
 
-    make_splits_balanced(path_in, path_out)
+    #make_splits_balanced(path_in, path_out)
+
+    d_path = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs/DERIVATION/splits'
+    i_path = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs/INFLECTION/splits'
+    o_path = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs'
+    combine_files(d_path, i_path, o_path)
 
 if __name__ == "__main__":
     main()
