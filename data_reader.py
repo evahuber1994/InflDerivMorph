@@ -1,12 +1,9 @@
-import spacy
 from torch.utils.data import Dataset
 from sklearn.preprocessing import LabelEncoder
-import torch
 import tarfile
 import finalfusion
 import numpy as np
 from utils import shuffle_lists
-import pandas as pd
 from gensim.test.utils import datapath
 from gensim.models import KeyedVectors
 """

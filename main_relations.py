@@ -147,7 +147,6 @@ def save_embeddings(path, model_path, encoder, relations):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('config')
-    parser.add_argument('all_models', action='store_false')
     args = parser.parse_args()
     with open(args.config) as cfg_file:
         config = toml.load(cfg_file)
