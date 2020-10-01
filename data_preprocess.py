@@ -52,6 +52,34 @@ class Preprocesser():
         self.write_to_fileDB(self.out_path, dict_relations)
         return dict_relations
 
+    def write_deriv_RU(self):
+        rels, words1, words2 = read_deriv(self.path, shuffle=True)
+
+        dict_rels = dict()
+        for r, w1, w2 in zip(rels, words1, words2):
+            if r not in dict_rels:
+                dict_rels[r] = [(w1,w2)]
+            else:
+                dict_rels[r].append((w1,w2))
+        with open(self.out_path, 'w') as wf:
+            writer = csv.writer(wf, delimiter='\t')
+            writer.writerow(("relation", "word1", "word2"))
+            for k,v in dict_rels.items():
+                count_ov = 0
+                for i in v:
+                    if i[0] not in self.embedding_voc or i[1] not in self.embedding_voc:
+                        count_ov+=1
+
+                if len(v) - count_ov > self.threshold:
+
+                    for i in v:
+                        if i[0] not in self.embedding_voc or i[1] not in self.embedding_voc:
+                            continue
+                        else:
+                            writer.writerow((k, i[0], i[1]))
+
+
+
     # helper method
     def write_to_fileDB(self, output_path, dict_relation):
         """
@@ -300,23 +328,26 @@ def combine_files(deriv_path, infl_path, out_path):
 
 
 def main():
+    #in_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/fr_data_conll/INFLECTION/fra.csv'
+    #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/fr_data_conll/INFLECTION/fra_inf.csv'
     """
-    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
-    extr = FeatureExtractor(path, embedding_dim=200)
-
-    path_in = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs/INFLECTION/deu_formatted.csv'
-    path_out = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs/INFLECTION/inflection_serverembs.csv'
-    prep = Preprocesser(path_in, path_out, extr.vocab)
+    embs = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/rus_65/model.fifu'
+    emb = FeatureExtractor(embs, 100)
+    in_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll/DERIVATION/derivru_filtered_thresh80.csv'
+    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll/DERIVATION/derivru_thresh80_final.csv'
+    prep = Preprocesser(in_path, out_path, emb.vocab)
     prep.read_and_write_unimorph()
     """
-    #path_in = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs/INFLECTION/inflection_serverembs.csv'
-    #path_out = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs/INFLECTION/splits/'
+    """
+    in_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll/DERIVATION/derivru_thresh80_final.csv'
+    out_path ='/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll/DERIVATION/splits/'
 
-    #make_splits_balanced(path_in, path_out)
+    make_splits_balanced(in_path, out_path)
+    """
 
-    d_path = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs/DERIVATION/splits'
-    i_path = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs/INFLECTION/splits'
-    o_path = '/home/evahu/Documents/Master/Master_Dissertation/data_serverembs'
+    d_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll/DERIVATION/splits'
+    i_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll/INFLECTION/splits'
+    o_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll'
     combine_files(d_path, i_path, o_path)
 
 if __name__ == "__main__":

@@ -16,6 +16,7 @@ def train(train_loader, val_loader, config, length_relations, device):
     # or make an if statement for choosing an optimizer
 
     # train_loss = 0.0
+    tolerance = 1e-5
     if config['non_linearity'] == "True":
         non_lin = True
     else:
@@ -74,7 +75,7 @@ def train(train_loader, val_loader, config, length_relations, device):
         print("epoch: {}, mean cosine similarity: {}, mean validation loss: {}".format(epoch, mean_cos, mean_loss))
         total_cos_similarities.append(mean_cos)
         if config['early_stopping_criterion'] == 'cosine_similarity':
-            if mean_cos > best_cos:
+            if mean_cos > best_cos - tolerance: #valid_f1 > best_f1 - tolerance:
                 current_patience = config['patience']
                 best_model = model
                 best_cos = mean_cos
@@ -161,7 +162,7 @@ def main():
     test_path = config['test_path']
     val_path = config['val_path']
 
-    emb_path = os.path.join(config['out_path'], "embeddings")
+    emb_path = os.path.join(config['out_path'], "embeddings.txt")
     pred_path = os.path.join(config['out_path'], "predictions.npy")
 
     relation_train, word1_train, word2_train = read_deriv(train_path, shuffle=True)
@@ -211,7 +212,7 @@ def main():
         writer = csv.writer(file, delimiter='\t')
         writer.writerow(("relation", "acc_at_1", "acc_at_5"))
         for k, v in acc_per_relation.items():
-            writer.writerow((k, v[0], v[1]))
+            writer.writerow((k, v[1], v[0]))
 
     # print("prediction sim", type(ranker.prediction_similarities), ranker.prediction_similarities)
     # average_rank = sum(ranker.ranks) / len(ranker.ranks)

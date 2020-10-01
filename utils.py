@@ -8,7 +8,9 @@ def make_vocabulary_matrix(feature_extractor, embedding_dim, target_words, restr
     else:
         whole_vocabulary = feature_extractor.vocab.words
         random.shuffle(whole_vocabulary)
+        print("length voc: {}".format(len(whole_vocabulary)))
         length = int(len(whole_vocabulary)/10)
+        print("length now: {}".format(str(length)))
         vocabulary = whole_vocabulary[:length]
         for t in target_words:
             if t not in vocabulary:

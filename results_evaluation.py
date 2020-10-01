@@ -48,7 +48,28 @@ def offset_vectors(file_path, embedding_path, emb_dim):
 
 
 
-
+def average_results_derinf(path):
+    out_path = path.replace(".csv", "_average.csv")
+    df = pd.read_csv(path, delimiter="\t")
+    df = df.set_index(['relation'])
+    l_relations = df.index.tolist()
+    infs = []
+    ders = []
+    for x in l_relations:
+        if ";" in x:
+            infs.append(x)
+        else:
+            ders.append(x)
+    df_inf = df.loc[infs, :]
+    df_der = df.loc[ders, :]
+    mean_acc1_inf = df_inf['acc_at_1'].mean()
+    mean_acc5_inf = df_inf['acc_at_5'].mean()
+    mean_acc1_der = df_der['acc_at_1'].mean()
+    mean_acc5_der = df_der['acc_at_5'].mean()
+    with open(out_path, 'w') as wf:
+        wf.write("\t r@5\tr@1\n")
+        wf.write("inflection\t{}\t{}\n".format(str(round(mean_acc5_inf,2)), str(round(mean_acc1_inf,2))))
+        wf.write("derivation\t{}\t{}\n".format(str(round(mean_acc5_der,2)), str(round(mean_acc1_der,2))))
 
 
 def plot_results(data_frame, name_column1, name_column2, out_path):
@@ -146,15 +167,27 @@ def tsne_plot(path_embedding, out_path):
 
 
 def main():
-    path_embedding = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_final_conll/results_conll/embeddings.txt'
-    out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_final_conll/results_conll/embeddings_plot.png'
-    tsne_plot(path_embedding, out)
-   #plot results
-    #path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_final_conll/results_conll/results_per_relation.csv'
-    #out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_final_conll/results_conll/plot_results.png'
-    #df = pd.read_csv(path, sep='\t')
-    #plot_results(df, 'relation', 'acc_at_5', out)
+    """    path_embs = "/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/de_results/de_results_conll/embeddings.txt"
+    path_out = "/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/french_results/fr_results_conll_first_normal/embedding_NN.csv"
+    df = embedding_comparison(path_embs, path_out, write=False)
+    find_closest(df, path_out)
+    """
 
+    path_embedding = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/french_results/fr_results_conll/embeddings.txt'
+    out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/french_results/fr_results_conll/embeddings_plot.png'
+    tsne_plot(path_embedding, out)
+
+    """
+    #plot results
+    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/de_results/de_results_conll/results_per_relation.csv'
+    out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/de_results/de_results_conll/plot_results.png'
+    df = pd.read_csv(path, sep='\t')
+    plot_results(df, 'relation', 'acc_at_5', out)
+
+"""
+    #path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/de_results/de_results_conll_normal/results_per_relation.csv'
+
+    #average_results_derinf(path)
 #path1 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/embeddings_new.txt'
     #path2 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/results_embs.csv'
     #df_embs = embedding_comparison(path1, path2)
