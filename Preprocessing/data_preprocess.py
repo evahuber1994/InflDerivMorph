@@ -1,8 +1,10 @@
 import csv
 from data_reader import read_deriv, FeatureExtractor, GensimFeatureExtractor
+from utils import create_dict
 import random
 import os
 import pandas as pd
+import numpy as np
 """
 preprocessing file to extract all pairs that share a relation from DErivBase
 boolean in read method to indicate whether inverse relation marked by star should be added or not
@@ -148,6 +150,7 @@ class Preprocesser():
                     dict_relations[line[0]] = [(line[1], line[2])]
         return dict_relations
 
+
     @property
     def out_path(self):
         return self._out_path
@@ -248,12 +251,31 @@ def make_splits_in_dir(directory, out_path, size_train, size_test):
         # out =  os.path.join(out_path, new_dir, str(fn.strip('csv')))
         make_splits(path, out, size_train, size_test, wm='w')
 
-def shorten_files(path_in, path_out, length):
-    df_in = pd.read_csv(path_in, delimiter='\t')
-    df_in = df_in.sample(frac=1)[:length]
+def shorten_files(path_inf, path_der, path_out):
+    dic_rel_der = create_dict(path_der)
+    dic_rel_inf = create_dict(path_inf)
+    lengths = []
+    for k,v in dic_rel_der.items():
+        lengths.append(len(v))
+    l = int(np.median(lengths))
+
+    with open(path_out, 'w') as wf:
+        writer = csv.writer(wf, delimiter="\t")
+        writer.writerow(("relation", "w1", "w2"))
+        for k,v in dic_rel_inf.items():
+            insts = v
+            if len(insts) > l:
+                random.shuffle(insts)
+                insts = insts[:l]
+            for w in insts:
+                writer.writerow((k, w[0], w[1]))
+
+    """
+    df_in = pd.read_csv(path_inf, delimiter='\t')
+    df_in = df_in.sample(frac=1)[:l]
 
     df_in.to_csv(path_out, sep='\t', index=False)
-
+    """
 def make_splits_balanced(path_in, path_out, train_size = 0.6, test_size= 0.2):
     dict_relations = dict()
     with open(path_in, 'r') as file:
@@ -264,6 +286,7 @@ def make_splits_balanced(path_in, path_out, train_size = 0.6, test_size= 0.2):
             if line[0] in dict_relations:
                 dict_relations[line[0]].append((line[1], line[2]))
             else:
+                print(line)
                 dict_relations[line[0]] = [(line[1], line[2])]
     train_path = path_out + "train.csv"
     val_path = path_out + "val.csv"
@@ -328,27 +351,34 @@ def combine_files(deriv_path, infl_path, out_path):
 
 
 def main():
-    #in_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/fr_data_conll/INFLECTION/fra.csv'
-    #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/fr_data_conll/INFLECTION/fra_inf.csv'
     """
+    in_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/rus_data_conll/INFLECTION/rus_labs.csv'
+
+    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/rus_data_conll/INFLECTION/rus_thresh80.csv'
+
     embs = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/rus_65/model.fifu'
     emb = FeatureExtractor(embs, 100)
-    in_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll/DERIVATION/derivru_filtered_thresh80.csv'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll/DERIVATION/derivru_thresh80_final.csv'
-    prep = Preprocesser(in_path, out_path, emb.vocab)
+
+    prep = Preprocesser(in_path, out_path, emb.vocab, threshold=60)
     prep.read_and_write_unimorph()
-    """
-    """
-    in_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll/DERIVATION/derivru_thresh80_final.csv'
-    out_path ='/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll/DERIVATION/splits/'
+
+
+    in_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/DERIVATION/Turkish_Derivation_thresh80_no1t1.csv'
+    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/DERIVATION/splits_1t1/'
+
 
     make_splits_balanced(in_path, out_path)
+
     """
-
-    d_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll/DERIVATION/splits'
-    i_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll/INFLECTION/splits'
-    o_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/rus_data_conll'
+    d_path ='/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/DERIVATION/splits'
+    i_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/INFLECTION/splits_small'
+    o_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/TUR/small'
     combine_files(d_path, i_path, o_path)
-
+    """
+    path_der = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/DERIVATION/splits_1t1/train.csv'
+    path_inf = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/INFLECTION/splits_1t1/train.csv'
+    path_out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/INFLECTION/splits_small_1t1/train.csv'
+    shorten_files(path_inf, path_der, path_out)
+    """
 if __name__ == "__main__":
     main()
