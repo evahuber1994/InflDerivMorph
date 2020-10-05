@@ -2,6 +2,7 @@ import numpy as np
 import random
 import torch
 import torch.nn.functional as F
+import csv
 def make_vocabulary_matrix(feature_extractor, embedding_dim, target_words, restricted):
     if not restricted:
         vocabulary = feature_extractor.vocab.words
@@ -45,3 +46,25 @@ def cosine_distance_loss(target_phrase, computed_phrase, dim=1, normalize=False)
     cosine_distances = 1 - F.cosine_similarity(target_phrase, computed_phrase, dim)
     total = torch.sum(cosine_distances)
     return total / target_phrase.shape[0]
+
+def create_dict(path):
+    dict_rel = dict()
+    with open(path, 'r') as rf:
+        next(rf)
+        for l in rf:
+            l = l.strip()
+            if not l: continue
+            line = l.split("\t")
+            if line[0] in dict_rel:
+                dict_rel[line[0]].append((line[1], line[2]))
+            else:
+                dict_rel[line[0]] = [(line[1], line[2])]
+    return dict_rel
+
+def save_new(dict_rel, out_path):
+    with open(out_path, 'w') as wf:
+        writer = csv.writer(wf, delimiter="\t")
+        writer.writerow(("relation", "w1", "w2"))
+        for k,v in dict_rel.items():
+            for w in v:
+                writer.writerow((k, w[0], w[1]))
