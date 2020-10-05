@@ -8,6 +8,8 @@ import seaborn as sns
 from sklearn.manifold import TSNE
 from data_reader import FeatureExtractor
 from sklearn.metrics.pairwise import cosine_similarity
+
+
 def read_file(path):
     return pd.read_csv(path, sep="\t")
 
@@ -171,13 +173,13 @@ def main():
     path_out = "/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/french_results/fr_results_conll_first_normal/embedding_NN.csv"
     df = embedding_comparison(path_embs, path_out, write=False)
     find_closest(df, path_out)
-    """
+
 
     path_embedding = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/french_results/fr_results_conll/embeddings.txt'
     out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/french_results/fr_results_conll/embeddings_plot.png'
     tsne_plot(path_embedding, out)
 
-    """
+
     #plot results
     path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/de_results/de_results_conll/results_per_relation.csv'
     out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/de_results/de_results_conll/plot_results.png'
@@ -185,9 +187,9 @@ def main():
     plot_results(df, 'relation', 'acc_at_5', out)
 
 """
-    #path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/de_results/de_results_conll_normal/results_per_relation.csv'
+    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/all_results/russian_results/ru_results_conll_2nd/results_per_relation.csv'
 
-    #average_results_derinf(path)
+    average_results_derinf(path)
 #path1 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/embeddings_new.txt'
     #path2 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/results_embs.csv'
     #df_embs = embedding_comparison(path1, path2)
