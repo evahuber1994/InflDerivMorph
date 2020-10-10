@@ -8,25 +8,42 @@ def counts(path):
     nr_per_rel = []
     dict_rel = create_dict(path)
     nr_of_rels = len(dict_rel)
+    dict_rel_counts = {"Derivation":0, "Inflection":0}
+    nr_inf = 0
+    nr_der = 0
     for k, v in dict_rel.items():
         nr_per_rel.append((k, len(v)))
         total_nr += len(v)
-    return total_nr, nr_of_rels, nr_per_rel
+        if k.startswith("DER"):
+            dict_rel_counts["Derivation"] += len(v)
+            nr_der +=1
+        elif k.startswith("INF"):
+            dict_rel_counts["Inflection"] += len(v)
+            nr_inf +=1
+        else:
+            print("wrong relation name?", k)
+    dict_rel_counts["Derivation_relations"] = nr_der
+    dict_rel_counts["Inflection_relations"] = nr_inf
+    return total_nr, nr_of_rels, nr_per_rel, dict_rel_counts
 
 
 def save_info(dict_info, out_path, keyword):
     with open(out_path, 'w') as wf:
-        wf.write("metadata for: {}\n".format(keyword))
+        #wf.write("metadata for: {}\n".format(keyword))
         wf.write("{}\t{}\t{}\n".format("split", "nr of data points", "nr of relations"))
         for k, v in dict_info.items():
             tot_nr = v[0]
             nr_rels = v[1]
-            wf.write("{}\t{}\t{}\n".format(k, str(tot_nr), str(nr_rels)))
+            wf.write("{}\t{}\t{}\n".format(k + "_ALL", str(tot_nr), str(nr_rels)))
+            dict_rel_counts = v[3]
+            wf.write("{}\t{}\t{}\n".format(k +"_Derivation", str(dict_rel_counts["Derivation"]), str(dict_rel_counts["Derivation_relations"])))
+            wf.write("{}\t{}\t{}\n".format(k +
+                "_Inflection", str(dict_rel_counts["Inflection"]), str(dict_rel_counts["Inflection_relations"])))
 
 
 def save_relations(dict_info, out_path, keyword):
     with open(out_path, 'w') as wf:
-        wf.write("all relations for: {}\n \n \n".format(keyword))
+        #wf.write("all relations for: {}\n \n \n".format(keyword))
         wf.write("{}\t{}\t{}\n".format("split", "relation", "nr of data points"))
         for k, v in dict_info.items():
             rels = v[2]
@@ -43,10 +60,10 @@ def main(path, keyword):
         name = f.strip(".csv").strip("combined_")
         print(name)
         path_file = os.path.join(path, f)
-        tot_nr, nr_rels, nr_membs = counts(path_file)
-        dict_info[name] = (tot_nr, nr_rels, nr_membs)
+        tot_nr, nr_rels, nr_membs, dict_rel_counts = counts(path_file)
+        dict_info[name] = (tot_nr, nr_rels, nr_membs, dict_rel_counts)
 
-    save_info(dict_info, out_path, keyword)
+    save_info(dict_info,  out_path, keyword)
     save_relations(dict_info, out_path_rels, keyword)
 
 

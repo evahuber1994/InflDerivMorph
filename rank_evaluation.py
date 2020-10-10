@@ -42,7 +42,6 @@ class Ranker:
                 prec50 = self.precision_at_rank(50, v)
                 prec80 = self.precision_at_rank(80, v)
                 sims = self._dict_sims[k]
-                print(type(sims[0]), type(sims[1]))
 
                 #sim1 = sum(sims[0])/len(sims[0])
                 sim2 = np.mean(sims)
@@ -78,7 +77,6 @@ class Ranker:
 
         # matrix of target representations ordered
         target_repr = np.take(self.vocabulary_matrix, target_ids, axis=0)
-        print(target_repr.shape, len(target_ids))
 
         target_similarities = cosine_similarity(self.vocabulary_matrix, target_repr)
 
@@ -87,6 +85,7 @@ class Ranker:
             target_prediction_similarity = cosine_similarity(self.predicted_embeddings[i].reshape(1, -1),
                                                              target_repr[i].reshape(1, -1))
             prediction_similarities.append(float(target_prediction_similarity[0]))
+            #print("pred sim:", float(target_prediction_similarity[0]))
             gold_similarities.append(target_similarities[:, i])
             # delete similarity ebtween target label and itself
             target_sims = np.delete(target_similarities[:, i], target_ids[i])
@@ -162,14 +161,6 @@ class Ranker:
 
     def save_fine_metrics(self):
         pass
-
-    """
-    def save_ranks(self, ranks, target):
-        #print("r", ranks)
-        #print("t", target)
-        ranks_words = [self.idx2lab[idx] for idx in ranks]
-        return ranks_words.append(self.idx2lab[target])
-    """
 
     @property
     def vocabulary_matrix(self):

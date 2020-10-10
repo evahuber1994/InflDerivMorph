@@ -10,7 +10,7 @@ import torch.nn as nn
 import numpy as np
 from rank_evaluation import Ranker
 import csv
-
+from results_evaluation import average_results_derinf
 
 def train(train_loader, val_loader, config, length_relations, device):
     # or make an if statement for choosing an optimizer
@@ -214,7 +214,7 @@ def main():
         writer.writerow(("relation", "prec_at_1", "prec_at_5", "prec_at_50", "prec_at_80",  "prediction_sim"))
         for k, v in acc_per_relation.items():
             writer.writerow((k, v[0], v[1], v[2], v[3], v[4]))
-
+    average_results_derinf(path_out2)
     # print("prediction sim", type(ranker.prediction_similarities), ranker.prediction_similarities)
     # average_rank = sum(ranker.ranks) / len(ranker.ranks)
     # average_rr = sum(ranker.reciprank) / len(ranker.reciprank)
