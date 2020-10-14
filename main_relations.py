@@ -2,7 +2,7 @@ import argparse
 import toml
 import torch
 from model import RelationFeedForward
-from utils import make_vocabulary_matrix, shuffle_lists, cosine_distance_loss
+from utils import make_vocabulary_matrix, cosine_distance_loss
 from data_reader import create_label_encoder, FeatureExtractor, RelationsDataLoader, read_deriv
 import os
 from torch import optim
@@ -10,7 +10,7 @@ import torch.nn as nn
 import numpy as np
 from rank_evaluation import Ranker
 import csv
-from results_evaluation import average_results_derinf
+from Analysis.results_evaluation import average_results_derinf
 
 def train(train_loader, val_loader, config, length_relations, device):
     # or make an if statement for choosing an optimizer
@@ -151,8 +151,11 @@ def main():
     with open(args.config) as cfg_file:
         config = toml.load(cfg_file)
 
-    #device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = torch.device(config['device'])
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(torch.cuda.current_device())
+    print("device changing")
+    print("device changed to:", torch.cuda.current_device())
+    #device = torch.device(config['device'])
     feature_extractor = FeatureExtractor(config['embeddings'], embedding_dim=config['embedding_dim'])
     print("loaded embeddings")
 

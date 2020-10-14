@@ -6,7 +6,7 @@ import toml
 import numpy as np
 import os
 import csv
-from results_evaluation import average_results_derinf
+from Analysis.results_evaluation import average_results_derinf
 
 def save_baseform_vectors(baseforms, extractor, out_path):
     print( len(baseforms), baseforms[:30])
