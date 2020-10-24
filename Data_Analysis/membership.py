@@ -1,9 +1,11 @@
 import pandas as pd
-path = 'adj_de_filtered.csv'
-out_path = 'adj_de_filtered_analysed_per_relation.csv'
-out_path2 = 'readme_noadj.txt'
-out_path3 = 'relation_pairs_words_noadj.csv'
-df = pd.read_csv(path, delimiter="\t")
+path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/normal_o1o/ALL_IN_ONE.csv'
+out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/inf_analysed_per_relation.csv'
+out_path2 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/inf_readme.txt'
+out_path3 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/inf_relation_pairs_words.csv'
+df_out_path = "/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/inf_df.csv"
+df_all = pd.read_csv(path, delimiter="\t")
+df = df_all[df_all['relation'].str.startswith("INF")]
 rels = set(df['relation'])
 dict_rels = dict()
 for r in rels:
@@ -40,17 +42,23 @@ for r1 in rels:
         if c>0:
             nrs[r1].append((r2, c, c_tot))
 
-"""
+df_rels.to_csv(df_out_path, sep="\t")
+
+
 with open(out_path, 'w') as wf:
-    wf.write("{}\t{}\t{}\t{}\n".format("relation1", "relation2", "count_same", "total_count"))
+    wf.write("{}\t{}\t{}\t{}\t{}\n".format("relation1", "relation2", "count_same", "total_count", "percentage_overlap"))
     for k,v in nrs.items():
         for w in v:
-            wf.write("{}\t{}\t{}\t{}\n".format(k, w[0], str(w[1]), str(w[2])))
+            c1 = w[1]
+            c2 = w[2]
+            avg_c = (c1/c2)*100
+
+            wf.write("{}\t{}\t{}\t{}\t{}\n".format(k, w[0], str(c1), str(c2), str(avg_c)))
 
 
 
 
-df_rels.to_csv(out_path, sep="\t")
+
 with open(out_path2, 'w') as wf:
     wf.write("relation\tnumber\n")
     for k,v in dict_rels.items():
@@ -63,4 +71,3 @@ with open(out_path3, 'w') as wf:
         for w in v:
             wf.write("{}\t{}\t{}\t{}\t{}\n".format(k[0],k[1], w[0], w[1], w[2]))
 
-"""

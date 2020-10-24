@@ -34,10 +34,10 @@ def get_sim_per_relation(in_path):
             wf.write("{}\t{}\n".format(k, np.mean(v)))
 
 def main():
-    file = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/normal_o1o/combined_train.csv'
+    file = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/normal_o1o/ALL_IN_ONE.csv'
     emb_path = '../embeddings/de_45/model.fifu'
     out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/emb_sims_word.csv'
-    #get_sim_per_word(file, out_path, emb_path)
+    get_sim_per_word(file, out_path, emb_path)
     get_sim_per_relation(out_path)
 
 if __name__ == "__main__":
