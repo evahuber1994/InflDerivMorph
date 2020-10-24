@@ -11,6 +11,18 @@ from utils import create_dict
 import numpy as np
 import os
 
+def add_ranks_small_big(path_big, path_small, out_path):
+    df_big = pd.read_csv(path_big, delimiter=",")
+    df_small = pd.read_csv(path_small,  delimiter="\t")
+
+    #df_big.sort_values('prec_at_1', axis=0, ascending=False, inplace=True)
+    #df_small.sort_values('prec_at_1', axis=0,ascending=False, inplace=True)
+    df_big["Rank"] = df_big['prec_at_1'].rank(ascending=False)
+    df_small["Rank"] = df_small['prec_at_1'].rank(ascending=False)
+    df_merge = pd.merge(df_big, df_small, on='relation')
+    df_merge.sort_values('Rank_x', axis=0, ascending=True, inplace=True)
+    df_merge.to_csv(out_path, sep="\t")
+
 def get_SD(dir_path, out_path):
     dict_results_inf = dict()
     dict_results_der = dict()
@@ -81,7 +93,7 @@ def get_mean_relations(dir_path, out_path):
         df_mean.loc[r] = mean
         print(df_std)
     out_path_mean = out_path.replace(".csv", "_means.csv")
-    out_path_std = out_path.replace(".csv", "_std")
+    out_path_std = out_path.replace(".csv", "_std.csv")
     df_std.to_csv(out_path_std, sep="\t")
     df_mean.to_csv(out_path_mean, sep="\t")
 
@@ -155,39 +167,6 @@ def average_results_derinf(path):
                                                str(round(mean_cos_der, 2))))
 
 
-def plot_results(data_frame, name_column1, name_column2, out_path):
-    """
-    http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
-    """
-    df = data_frame.sort_values(by=[name_column2], ascending=False)
-    x = df[name_column1].to_numpy()
-    y = df[name_column2].to_numpy()
-    #
-    # ax = plt.figure(figsize=(50,10))
-    plt.figure(figsize=(20, 13))
-
-    ax = plt.subplot(111)
-    ax.spines["top"].set_visible(False)
-    ax.spines["bottom"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.spines["left"].set_visible(False)
-    ax.get_xaxis().tick_bottom()
-    ax.get_yaxis().tick_left()
-
-    # plt.yticks(range(0, 91, 10), [str(x) + "%" for x in range(0, 91, 10)], fontsize=14)
-    plt.xticks(fontsize=10)
-    plt.xticks(rotation=90)
-    plt.plot(x, y)
-    plt.text("N;DAT;PL", 1, "Precision at rank 5", fontsize=17, ha="center")
-    # plt.text(x, y, s=11)
-    # axes = fig.add_axes([0.1, 0.1, 0.8, 0.8])
-    # rect = [0.1, 0.1, 0.8, 0.8]
-    # axes = fig.add_axes(rect)
-    # axes.yaxis.label.set_size(5)
-    # axes.plot(x,y)
-
-    plt.savefig(out_path)
-    plt.show()
 
 
 def embedding_comparison(path_embedding, out_path, write=False):
@@ -326,28 +305,26 @@ def main():
     out_path = '/home/evahu/Documents/Master/Master_Dissertation/results_firstround/results/GERMAN_FINAL/allrels.csv'
     #get_SD(dir_path, out_path)
     get_mean_relations(dir_path, out_path)
-  
+
     #path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/normal/combined_test.csv'
     #emb_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/de_45/model.fifu'
     #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/analysis/try.csv'
     #cosine_similarity_base_target(path, emb_path, out_path)
-    path_embs = "/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/de_results/de_results_conll/embeddings.txt"
-    path_out = "/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/french_results/fr_results_conll_first_normal/embedding_NN.csv"
+    """
+    path_embs = "/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/german_multiruns/german_1/embeddings.txt"
+    path_out = "/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/german_multiruns/german_1/embeddings_compared.csv"
     df = embedding_comparison(path_embs, path_out, write=False)
     find_closest(df, path_out)
 
 
-    path_embedding = '/home/evahu/Documents/Master/Master_Dissertation/results_firstround/results/TUR2/embeddings.txt'
-    out = '/home/evahu/Documents/Master/Master_Dissertation/results_firstround/results/TUR2/small_embeddings_plot.png'
-    tsne_plot(path_embedding, out)
 
-   
+    out = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/german_multiruns/german_1/embeddings_plot.pdf'
+    tsne_plot(path_embs, out)
+
+    """
     #plot results
-    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/de_results/de_results_conll/results_per_relation.csv'
-    out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/de_results/de_results_conll/plot_results.png'
-    df = pd.read_csv(path, sep='\t')
-    plot_results(df, 'relation', 'acc_at_5', out)
 
+    """
 
     #path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/all_results/russian_results/ru_results_conll_2nd/results_per_relation.csv'
 
@@ -367,6 +344,12 @@ def main():
     # emb_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
     # file_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/combined_test.csv'
     # offset_vectors(file_path, emb_path, 200)
+
+    """
+    path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_normal_means.csv'
+    path_small ='/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_small_means.csv'
+    path_out = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_ranks.csv'
+    add_ranks_small_big(path, path_small, path_out)
     """
 if __name__ == "__main__":
     main()
