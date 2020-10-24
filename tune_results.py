@@ -1,7 +1,7 @@
 import os
 import pandas as pd
-dir_path = '/home/evahu/Documents/Master/Master_Dissertation/results_firstround/results/tune'
-out_path = '/home/evahu/Documents/Master/Master_Dissertation/results_firstround/results/tune_results_German.csv'
+dir_path = '/home/eva/master_diss/results/tune/french'
+out_path = '/home/eva/master_diss/results/tune/french/results_tune_french.csv'
 out_path2 = out_path.replace(".csv", "_summary.csv")
 all = pd.DataFrame()
 all2 = pd.DataFrame()
