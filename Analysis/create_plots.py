@@ -169,7 +169,7 @@ def newline(p1, p2, color='black'):
     return l
 
 
-def plot_results(data_frame, name_column1, name_column2, out_path):
+def plot_results(data_frame, name_column1, name_column2,baseline_score, out_path):
     """
     http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
     """
@@ -185,6 +185,8 @@ def plot_results(data_frame, name_column1, name_column2, out_path):
         else:
             colours.append(cmap(0.3))
     ax.barh(df[name_column1], df[name_column2], color=colours)
+    #ax.vlines(baseline_score, ymin=0, ymax=len(rels), color='k',linestyles='solid')
+    ax.barh(df[name_column1],df[baseline_score], edgecolor = 'k', color='k', alpha=0.24)
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
     # ax.spines['left'].set_visible(False)
@@ -214,19 +216,20 @@ def create_scatter_plot(x_axis, y_axis, df):
 
 
 def main():
-    """
-    path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_small_means.csv'
-    out = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_small_means_plot1.pdf'
+
+    path ="/home/evahu/Documents/Master/Master_Dissertation/results_final/FRENCH2/results_with_baseline_SMALL.csv"
+    out = path.replace(".csv", "_plot.pdf")
     #df = pd.read_csv(path, sep='\t', index_col='relation')
     df = pd.read_csv(path, sep='\t')
-    print(df.head())
-    plot_results(df, 'relation', 'prec_at_1', out)
+    print(df.keys())
+    plot_results(df, 'relation', 'prec_at_1','prec_at_1_baseline', out)
+
     """
     path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_rank_plustraining.csv'
     out_path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_rank_plustraining_plot_whole.pdf'
     df = pd.read_csv(path, delimiter="\t")
     change_in_rank(df, out_path, nr_rows=0)
-    """
+   
     path_in = "/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_normal_means_with_offsets.csv"
     path_out = path_in.replace(".csv", "_plot.pdf")
     df = pd.read_csv(path_in, delimiter="\t")

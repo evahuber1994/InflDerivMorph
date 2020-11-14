@@ -282,8 +282,22 @@ def plot_tune_results(df):
     #     df['C'].plot(color='b')
 
 def main():
-    #(path, emb_path, out_path, average=True
     """
+    dir_path = "/home/evahu/Documents/Master/Master_Dissertation/results_final/FRENCH2/french_multiruns_small"
+    out_path = "/home/evahu/Documents/Master/Master_Dissertation/results_final/FRENCH2/relations_small.csv"
+    get_mean_relations(dir_path, out_path)
+
+    path_embs = "/home/evahu/Documents/Master/Master_Dissertation/results_final/Russian/normal/russian_normal_1/embeddings.txt"
+    path_out = path_embs.replace(".txt", "_plot.pdf")
+    #df = embedding_comparison(path_embs, path_out, write=False)
+    #find_closest(df, path_out)
+
+    #out = '/home/evahu/Documents/Master/Master_Dissertation/results_final/TURKISH/turkish_multiruns/turkish_1/embedding_plot.pdf'
+    tsne_plot(path_embs, path_out)
+
+
+    #(path, emb_path, out_path, average=True
+
     dirrec = '/home/evahu/Documents/Master/Master_Dissertation/results_firstround/results/tune'
     dir_out = '/home/evahu/Documents/Master/Master_Dissertation/results_firstround/results/tune_out_try.csv'
     df = tune_results(dirrec)
@@ -300,39 +314,30 @@ def main():
     emb_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/de_45/model.fifu'
     out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/normal_o1o/combined_test_embedding.csv'
     cosine_similarity_base_target(path, emb_path, out_path)
-
-    dir_path = '/home/evahu/Documents/Master/Master_Dissertation/results_firstround/results/GERMAN_FINAL/normal'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/results_firstround/results/GERMAN_FINAL/allrels.csv'
-    #get_SD(dir_path, out_path)
+    """
+    dir_path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/Russian/small'
+    out_path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/Russian/all_relations_small.csv'
     get_mean_relations(dir_path, out_path)
-
+    #get_mean_relations(dir_path, out_path)
+    """
     #path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/normal/combined_test.csv'
     #emb_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/de_45/model.fifu'
     #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/analysis/try.csv'
     #cosine_similarity_base_target(path, emb_path, out_path)
     """
-    path_embs = "/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/german_multiruns/german_1/embeddings.txt"
-    path_out = "/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/german_multiruns/german_1/embeddings_compared.csv"
-    df = embedding_comparison(path_embs, path_out, write=False)
-    find_closest(df, path_out)
 
-
-
-    out = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/german_multiruns/german_1/embeddings_plot.pdf'
-    tsne_plot(path_embs, out)
-
-    """
+  
     #plot results
 
-    """
+   
 
     #path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/all_results/russian_results/ru_results_conll_2nd/results_per_relation.csv'
 
     #average_results_derinf(path)
 
-
-    # path1 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/embeddings_new.txt'
-    # path2 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/results_embs.csv'
+    """
+    #path1 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/embeddings_new.txt'
+    #path2 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/results_embs.csv'
     # df_embs = embedding_comparison(path1, path2)
     
     
@@ -340,16 +345,21 @@ def main():
     # find_closest(df_embs, out)
     # plot_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/plot.png'
     # tsne_plot(path1, plot_path)
-    
+
     # emb_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
     # file_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/combined_test.csv'
     # offset_vectors(file_path, emb_path, 200)
 
-    """
+
     path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_normal_means.csv'
     path_small ='/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_small_means.csv'
     path_out = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_ranks.csv'
     add_ranks_small_big(path, path_small, path_out)
+
+    dir_path = "/home/evahu/Documents/Master/Master_Dissertation/results_final/FRENCH2/french_multiruns_small"
+    out_path = "/home/evahu/Documents/Master/Master_Dissertation/results_final/FRENCH2/all_small.csv"
+    get_SD(dir_path, out_path)
     """
+
 if __name__ == "__main__":
     main()

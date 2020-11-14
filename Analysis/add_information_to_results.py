@@ -1,8 +1,12 @@
 import argparse
 import pandas as pd
 
-
-
+def add_baseline_results(df_baseline, df_results):
+    df_baseline.rename(columns={'prec_at_1':'prec_at_1_baseline'}, inplace=True)
+    df_baseline.drop(['prec_at_5','prec_at_50','prec_at_80', 'prediction_sim'], axis=1, inplace=True)
+    df_results.drop(['prec_at_5','prec_at_50','prec_at_80', 'prediction_sim'], axis=1, inplace=True)
+    df_merged = df_results.merge(df_baseline, on='relation')
+    return df_merged
 def add_information(df_res, df_inf, merge_criteria = "relation", info = "all", info_all=True):
     #df_info_selected = pd.DataFrame()
     #df_inf.drop('relation', axis = 1,inplace=True)
@@ -27,15 +31,21 @@ def main():
     df_merged = add_information(df_results, df_info)
     df_merged.to_csv(out_path, sep="\t")
     """
-    path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/category_analysis/results_per_word_normal.csv'
-    path_info = "/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/category_analysis/final_analysis_sheet.csv"
-    out_path = path.replace(".csv", "_with_counts.csv")
+    path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/TURKISH/all_rels_normal_means_mapped.csv'
+    path_info = "/home/evahu/Documents/Master/Master_Dissertation/results_final/TURKISH/quantitative/Turkish1_resperword_counts_ambiguous_mapped.csv"
+    out_path = path.replace(".csv", "_freqs.csv")
     df_res = pd.read_csv(path, delimiter="\t")
-    print(df_res.keys())
     df_info = pd.read_csv(path_info, delimiter="\t")
-    print(df_info.keys())
+    print(df_res.keys())
+    df_out = add_information(df_res, df_info)
+    print(df_out)
 
-    df_merged = add_information(df_res, df_info, merge_criteria=['relation', 'w2'])
-    df_merged.to_csv(out_path, sep="\t", index=False)
+    """
+    df_baseline = pd.read_csv(path_info, delimiter="\t")
+    print(df_baseline.keys())
+
+    df_merged = add_baseline_results(df_baseline, df_res)
+    print(df_merged.keys())
+    df_merged.to_csv(out_path, sep="\t", index=False)"""
 if __name__ == "__main__":
     main()
