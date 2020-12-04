@@ -1,4 +1,6 @@
-
+"""
+align UD labels and Unimorph labels
+"""
 
 def morph_info(tag_str, splitter, pos):
     infs = dict()

@@ -1,3 +1,6 @@
+"""
+get frequencies from corpus
+"""
 import argparse
 import os
 #import lzma

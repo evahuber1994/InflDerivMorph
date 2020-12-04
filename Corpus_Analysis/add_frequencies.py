@@ -26,28 +26,35 @@ def add_frequencies(dict_count, in_path, out_path, word="w1"):
 def add_frequencies_to_words(dict_count, in_path, out_path, word):
     print("gets frequencies for word file")
     print("word type", word)
+    print("in path", in_path)
     assert word == "w1" or word == "w2", "invalid word "
+    i = 0
     with open(out_path, 'w') as wf:
         wf.write("{}\t{}\t{}\t{}\t{}\n".format("relation", word, "counts", "pos", "morph"))
-        with open(in_path, 'r') as rf:
+        with open(in_path, 'r', encoding='utf8') as rf:
             next(rf)
-            for l in rf:
-                l = l.strip()
-                line = l.split("\t")
-                if word == "w1":
-                    tw = line[1].lower()
-                elif word == "w2":
-                    tw = line[2].lower()
-                else:
-                    print("invalid word")
-                if tw in dict_count:
-                    counts = dict_count[tw]
-                    for c in counts:
-                        if len(c) > 2:
-                            wf.write("{}\t{}\t{}\t{}\t{}\n".format(line[0], tw, c[-1], c[1], c[2]))
-                else:
-                    print("{} not in frequency dict".format(tw))
-                    wf.write("{}\t{}\t{}\t{}\t{}\n".format(line[0], tw, "NA", "NA", "NA"))
+            try:
+                for l in rf:
+                    i+=1
+                    print("line",i, l)
+                    l = l.strip()
+                    line = l.split("\t")
+                    if word == "w1":
+                        tw = line[1].lower()
+                    elif word == "w2":
+                        tw = line[2].lower()
+                    else:
+                        print("invalid word")
+                    if tw in dict_count:
+                        counts = dict_count[tw]
+                        for c in counts:
+                            if len(c) > 2:
+                                wf.write("{}\t{}\t{}\t{}\t{}\n".format(line[0], tw, c[-1], c[1], c[2]))
+                    else:
+                        print("{} not in frequency dict".format(tw))
+                        wf.write("{}\t{}\t{}\t{}\t{}\n".format(line[0], tw, "NA", "NA", "NA"))
+            except:
+                print("problem reading file")
 def read_count_dict(in_path):
     #("word form", "pos", "morph", "count"
     dict_count = dict()

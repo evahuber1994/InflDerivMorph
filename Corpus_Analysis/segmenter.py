@@ -1,3 +1,6 @@
+"""
+segment words with smor
+"""
 from collections import Counter
 import gzip
 import re
@@ -73,21 +76,6 @@ def read_conll(file_path, segmenter):
             morph = line[3]
             segmenter.segment_word(wf)
 
-            # for k,v in prefixes.items():
-            #     for p in k:
-            #         if wf.startswith(p[0]) and pos == p[1]:
-            #             if k not in dict_all:
-            #                 dict_all[k] = [(wf, pos)]
-            #             else:
-            #                 dict_all[k].append((wf, pos))
-            # for k,v in suffixes.items():
-            #     for p in k:
-            #         if wf.startswith(p[0]) and pos == p[1]:
-            #             if k not in dict_all:
-            #                 dict_all[k] = [(wf, pos)]
-            #             else:
-            #                 dict_all[k].append((wf, pos))
-            ## plus inflections
     return dict_all
 
 def get_morphemes(list_segmented, pos):
