@@ -10,7 +10,7 @@ from gensim.models import KeyedVectors
 reads file in the format of the standard morphology file in this work 
 first column relation_type, second column base word, third column inflection/derivation
 """
-def read_deriv(path, shuffle=False):
+def read_deriv(path, splitter='\t', shuffle=False):
     relations = []
     word1 = []
     word2 = []
@@ -19,7 +19,7 @@ def read_deriv(path, shuffle=False):
         for l in file:
             l = l.strip()
             if not l: continue
-            line = l.split('\t')
+            line = l.split(splitter)
             relations.append(line[0])
             word1.append(line[1])
             word2.append(line[2])
@@ -195,14 +195,10 @@ class GensimFeatureExtractor:
                         print(l[0])
         return emb_dict
 def main():
-    """
-    path_emb = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/45/model.fifu'
+
+    path_emb = 'embeddings/tur_70/model.fifu'
     extractor = FeatureExtractor(path_emb, 100)
     print(len(extractor.vocab))
-    """
-    path_emb = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
-    extractor2 = FeatureExtractor(path_emb, 100)
-    print(len(extractor2.vocab))
 
 
 

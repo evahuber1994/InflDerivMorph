@@ -1,8 +1,23 @@
 from utils import create_dict
 import os
 import argparse
-
-
+import pandas as pd
+def average_counts(path):
+    df = pd.read_csv(path, sep="\t")
+    print(df.keys())
+    infs = df[df['relation'].str.startswith("INF_")]
+    ders = df[df['relation'].str.startswith("DER_")]
+    out_path = path.replace(".csv", "_average.csv")
+    #out_path_der = path.replace(".csv", "average_DER.csv")
+    infs_means = infs.sum()
+    infs_means = infs_means[1:]
+    infs_means.loc[-1] = ['set_infs', 'number']
+    ders_means = ders.sum()
+    ders_means = ders_means[1:]
+    ders_means.loc[-1] = ['set_ders', 'number']
+    both_means = pd.concat([infs_means, ders_means])
+    print(both_means)
+    both_means.to_csv(out_path, sep="\t")
 def counts(path):
     total_nr = 0
     nr_per_rel = []
@@ -51,25 +66,28 @@ def save_relations(dict_info, out_path, keyword):
                 wf.write("{}\t{}\t{}\n".format(k, r[0], r[1]))
 
 
-def main(path, keyword):
-    out_path = os.path.join(path, "README.txt")
-    out_path_rels = os.path.join(path, "relations.txt")
-    dict_info = dict()
-    for f in os.listdir(path):
-        print(f)
-        name = f.strip(".csv").strip("combined_")
-        print(name)
-        path_file = os.path.join(path, f)
-        tot_nr, nr_rels, nr_membs, dict_rel_counts = counts(path_file)
-        dict_info[name] = (tot_nr, nr_rels, nr_membs, dict_rel_counts)
+def main(path, keyword,type):
+    if type == "data_sets":
+        out_path = os.path.join(path, "README.txt")
+        out_path_rels = os.path.join(path, "relations.txt")
+        dict_info = dict()
+        for f in os.listdir(path):
+            print(f)
+            name = f.strip(".csv").strip("combined_")
+            print(name)
+            path_file = os.path.join(path, f)
+            tot_nr, nr_rels, nr_membs, dict_rel_counts = counts(path_file)
+            dict_info[name] = (tot_nr, nr_rels, nr_membs, dict_rel_counts)
 
-    save_info(dict_info,  out_path, keyword)
-    save_relations(dict_info, out_path_rels, keyword)
-
+        save_info(dict_info,  out_path, keyword)
+        save_relations(dict_info, out_path_rels, keyword)
+    else:
+        average_counts(path)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("path_directory")
     parser.add_argument("dataset_name")
+    parser.add_argument("type")
     args = parser.parse_args()
-    main(args.path_directory, args.dataset_name)
+    main(args.path_directory, args.dataset_name, args.type)

@@ -1,7 +1,10 @@
+"""
+get overview of the results from tuning
+"""
 import os
 import pandas as pd
-dir_path = '/home/eva/master_diss/results/tune/french'
-out_path = '/home/eva/master_diss/results/tune/french/results_tune_french.csv'
+dir_path = '/home/eva/master_diss/results/tune/russian_normal'
+out_path = '/home/eva/master_diss/results/tune/russian_normal_results.csv'
 out_path2 = out_path.replace(".csv", "_summary.csv")
 all = pd.DataFrame()
 all2 = pd.DataFrame()
