@@ -10,13 +10,12 @@ from sklearn.metrics.pairwise import cosine_similarity
 from utils import create_dict
 import numpy as np
 import os
+from adjustText import adjust_text
 
 def add_ranks_small_big(path_big, path_small, out_path):
     df_big = pd.read_csv(path_big, delimiter=",")
     df_small = pd.read_csv(path_small,  delimiter="\t")
 
-    #df_big.sort_values('prec_at_1', axis=0, ascending=False, inplace=True)
-    #df_small.sort_values('prec_at_1', axis=0,ascending=False, inplace=True)
     df_big["Rank"] = df_big['prec_at_1'].rank(ascending=False)
     df_small["Rank"] = df_small['prec_at_1'].rank(ascending=False)
     df_merge = pd.merge(df_big, df_small, on='relation')
@@ -209,22 +208,30 @@ def tsne_plot(path_embedding, out_path):
 
     tsne_model = TSNE(perplexity=40, n_components=2, init='pca', n_iter=2500, random_state=23)
     new_values = tsne_model.fit_transform(tokens)
-
+    cmap = plt.cm.coolwarm
     x = []
     y = []
     for value in new_values:
         x.append(value[0])
         y.append(value[1])
 
-    plt.figure(figsize=(22, 22))
+    plt.figure(figsize=(15, 15))
     for i in range(len(x)):
-        plt.scatter(x[i], y[i])
-        plt.annotate(labels[i],
-                     xy=(x[i], y[i]),
-                     xytext=(4, 2),
-                     textcoords='offset points',
-                     ha='right',
-                     va='bottom')
+        if labels[i].startswith("I"):
+            col ="b"
+            #col = cmap(0.3)
+        else:
+            col = "r"
+            #col = cmap(.9)
+        plt.scatter(x[i], y[i], s=30, color=col)
+        #plt.annotate(labels[i],
+        #             xy=(x[i], y[i]),
+        #             xytext=(4, 2),
+        #             textcoords='offset points',
+        #             ha='right',
+        #             va='bottom')
+    texts = [plt.text(x[i], y[i], labels[i], fontsize=12) for i in range(len(x))]
+    adjust_text(texts)
     plt.savefig(out_path)
     plt.show()
 
@@ -240,12 +247,7 @@ def tune_results(dir_path): #tune parameter, measure
     final_df = pd.DataFrame(columns=column_names)
     for subd in os.listdir(dir_path):
         #hyperparams = subd.split("+")
-        """
-        layers = hyperparams[0]
-        non_l = hyperparams[1]
-        type_non_l = hyperparams[2]
-        loss = hyperparams[3]
-        """
+
         if subd in paths:
             subd_path = os.path.join(dir_path, subd)
 
@@ -274,92 +276,15 @@ def plot_tune_results(df):
             cr = "g"
         #plt.plot(row, color=cr,linewidth=0.5)
     plt.show()
-    #df = df.T.plot()
-    #plt.show()
-    # with pd.plotting.plot_params.use('x_compat', True):
-    #     df['A'].plot(color='r')
-    #     df['B'].plot(color='g')
-    #     df['C'].plot(color='b')
+
 
 def main():
-    """
-    dir_path = "/home/evahu/Documents/Master/Master_Dissertation/results_final/FRENCH2/french_multiruns_small"
-    out_path = "/home/evahu/Documents/Master/Master_Dissertation/results_final/FRENCH2/relations_small.csv"
-    get_mean_relations(dir_path, out_path)
+    emb_path = 'relation_embeddings.txt'
+    out_path = emb_path.replace(".txt", "_plot.pdf")
+    tsne_plot(emb_path, out_path)
 
-    path_embs = "/home/evahu/Documents/Master/Master_Dissertation/results_final/Russian/normal/russian_normal_1/embeddings.txt"
-    path_out = path_embs.replace(".txt", "_plot.pdf")
-    #df = embedding_comparison(path_embs, path_out, write=False)
-    #find_closest(df, path_out)
-
-    #out = '/home/evahu/Documents/Master/Master_Dissertation/results_final/TURKISH/turkish_multiruns/turkish_1/embedding_plot.pdf'
-    tsne_plot(path_embs, path_out)
-
-
-    #(path, emb_path, out_path, average=True
-
-    dirrec = '/home/evahu/Documents/Master/Master_Dissertation/results_firstround/results/tune'
-    dir_out = '/home/evahu/Documents/Master/Master_Dissertation/results_firstround/results/tune_out_try.csv'
-    df = tune_results(dirrec)
-    print(df.keys())
-    names = df.index.values
-    new_names = {old_n: old_n[0] for old_n in names}
-    df.rename(new_names, inplace=True)
-
-    #df.to_csv(dir_out, sep="\t")
-    print(df.head)
-    plot_tune_results(df)
-
-    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/normal_o1o/combined_test.csv'
-    emb_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/de_45/model.fifu'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/normal_o1o/combined_test_embedding.csv'
-    cosine_similarity_base_target(path, emb_path, out_path)
-    """
-    dir_path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/Russian/small'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/Russian/all_relations_small.csv'
-    get_mean_relations(dir_path, out_path)
-    #get_mean_relations(dir_path, out_path)
-    """
-    #path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/normal/combined_test.csv'
-    #emb_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/de_45/model.fifu'
-    #out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/analysis/try.csv'
-    #cosine_similarity_base_target(path, emb_path, out_path)
-    """
-
-  
-    #plot results
 
    
-
-    #path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/all_results/russian_results/ru_results_conll_2nd/results_per_relation.csv'
-
-    #average_results_derinf(path)
-
-    """
-    #path1 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/embeddings_new.txt'
-    #path2 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/results_embs.csv'
-    # df_embs = embedding_comparison(path1, path2)
-    
-    
-    # out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/results_top5.csv'
-    # find_closest(df_embs, out)
-    # plot_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/results_combined/plot.png'
-    # tsne_plot(path1, plot_path)
-
-    # emb_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/word2vec-mincount-30-dims-100-ctx-10-ns-5.w2v'
-    # file_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data2/combined_test.csv'
-    # offset_vectors(file_path, emb_path, 200)
-
-
-    path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_normal_means.csv'
-    path_small ='/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_small_means.csv'
-    path_out = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_ranks.csv'
-    add_ranks_small_big(path, path_small, path_out)
-
-    dir_path = "/home/evahu/Documents/Master/Master_Dissertation/results_final/FRENCH2/french_multiruns_small"
-    out_path = "/home/evahu/Documents/Master/Master_Dissertation/results_final/FRENCH2/all_small.csv"
-    get_SD(dir_path, out_path)
-    """
 
 if __name__ == "__main__":
     main()

@@ -2,6 +2,8 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import numpy as np
 import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
+from matplotlib import RcParams
 
 def rank_distributions(df, out_path): #relation targetword rank
     relations = list(df['relation'])
@@ -25,22 +27,10 @@ def rank_distributions(df, out_path): #relation targetword rank
     plt.savefig(out_path + "all_in_one.pdf")
     plt.show()
 
-    """
-    for r in relations:
-        
-        path_figure = out_path + r + ".pdf"
-        sub_df = df[df['relation'] == r]
-        print(sub_df['rank'].shape)
-        upper_value = sub_df.shape[0]
-        plt.hist(sub_df['rank'], numb_bins, range=(0, upper_value),facecolor='blue')
-        plt.savefig(path_figure)
-    """
 
 def scatter_rank_against_frequency(df, path_out):
     fig = plt.figure(figsize=(12, 12))
     ax = fig.add_subplot(1, 1, 1, )
-    #plt.gca().invert_yaxis()
-    #plt.gca().invert_xaxis()
     counts_log = np.log2(df["count"])
     ax.scatter(df["rank"], counts_log , s=4)
     plt.show()
@@ -85,16 +75,10 @@ def scatter_value_against_performance(df,  x_value, y_value, x_label, y_label, p
 
 
 def change_in_rank(df_in, out_path, nr_rows=30):
-    """
-    df["color"] = df.apply(lambda row: "green" if row["1957"] >= row["1952"] else "red", axis = 1)
-    https://www.kaggle.com/python10pm/plotting-with-python-learn-80-plots-step-by-step
-    :param data_frame:
-    :param out_path:
-    :return:
-    """
+
     rows = nr_rows
 
-    fig, ax = plt.subplots(1, 1, figsize=(10, 20))
+    fig, ax = plt.subplots(1, 1, figsize=(8, 20))
     df_in.sort_values('Rank_x', axis=0, ascending=True, inplace=True)
     print(df_in.shape)
     df = df_in
@@ -113,10 +97,6 @@ def change_in_rank(df_in, out_path, nr_rows=30):
     ax.vlines(x=0, ymin=1, ymax=scale, color='black', alpha=0.7, linewidth=1, linestyles='dotted')
     ax.vlines(x=3, ymin=1, ymax=scale, color='black', alpha=0.7, linewidth=1, linestyles='dotted')
 
-    #school_y_vals = np.linspace(1, scale - 1, num=len(school_list))
-    #major_y_vals = np.linspace(1, scale - 1, num=len(major_list))
-    #ax.scatter(y=school_y_vals, x=np.repeat(1, len(school_list)), s=10, color='black', alpha=0.7)
-    #ax.scatter(y=major_y_vals, x=np.repeat(3, len(major_list)), s=10, color='black', alpha=0.7)
 
     # write the lines and annotation
     rank_vals_x = sorted(ranks_X)
@@ -143,23 +123,12 @@ def change_in_rank(df_in, out_path, nr_rows=30):
 
         newline([0, x], [3, y], color=colour)
 
-
-        #ax.set(xlim=(0, 4), ylim=(0, scale))
     ax.axis('off')
 
     plt.title("rank changes")
     plt.savefig(out_path)
     plt.show()
 
-        # df.sort_values('Rank_x', axis=0, ascending=False, inplace=True)
-
-        # df["color"] = df.apply(lambda row: "green" if row["Rank_x"] >= row["Rank_y"] else "red", axis=1)
-        # fig = plt.figure(figsize=(8, 12))
-        # ax = fig.add_subplot()
-        # for r in df['relation']:
-        #     start_x = df[df['relation'] == r]['Rank_x']
-        #     finish_x = df[df['relation'] == r]['Rank_y']
-        #     colour = df[df['relation'] == r]['color']
 
 
 def newline(p1, p2, color='black'):
@@ -169,35 +138,45 @@ def newline(p1, p2, color='black'):
     return l
 
 
-def plot_results(data_frame, name_column1, name_column2,baseline_score, out_path):
+def plot_results(data_frame, name_column1, name_column2,baseline_score, largest_score, out_path):
     """
     http://www.randalolson.com/2014/06/28/how-to-make-beautiful-data-visualizations-in-python-with-matplotlib/
     """
+    font_tile = {'fontsize': 20}
+
+
     df = data_frame.sort_values(by=[name_column2], ascending=True)
 
-    fig, ax = plt.subplots(figsize=(20, 20))
+    fig, ax = plt.subplots(figsize=(15, 25))
+    ax.tick_params(labelsize=9.6)
     rels = list(df['relation'])
     colours = []
     cmap = plt.cm.coolwarm
+    d = cmap(.9)
+    i = cmap(0.3)
     for r in rels:
         if r.startswith("D"):
-            colours.append(cmap(.9))
+            colours.append(d)
         else:
-            colours.append(cmap(0.3))
+            colours.append(i)
     ax.barh(df[name_column1], df[name_column2], color=colours)
-    #ax.vlines(baseline_score, ymin=0, ymax=len(rels), color='k',linestyles='solid')
     ax.barh(df[name_column1],df[baseline_score], edgecolor = 'k', color='k', alpha=0.24)
+
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
-    # ax.spines['left'].set_visible(False)
-    # ax.spines['bottom'].set_visible(False)
+
     ax.get_xaxis().tick_bottom()
     ax.get_yaxis().tick_left()
-    # ax.legend()
-    ax.set_title("Precision at rank 1")
+    red_patch = mpatches.Patch(color=d, label='Derivation')
+    blue_patch = mpatches.Patch(color=i, label='Inflection')
+    shady_patch = mpatches.Patch(color="k",alpha=0.24, label='Baseline')
+    ax.legend(handles=[red_patch, blue_patch,shady_patch], loc='lower right', prop={'size': 20})
 
-    plt.xlim(0, 1.0)
-    plt.ylim(rels[0], rels[-1])
+    ax.set_title("Precision at rank 1", font_tile)
+
+    plt.xlim(0, largest_score)
+
+    plt.ylim(-1, len(rels))
     plt.tight_layout()
     plt.savefig(out_path)
     plt.show()
@@ -205,8 +184,7 @@ def plot_results(data_frame, name_column1, name_column2,baseline_score, out_path
 
 
 def create_scatter_plot(x_axis, y_axis, df):
-    # df.plot.scatter(x=x_axis, y=y_axis)
-    # plt.show()
+
     df_sub = df[df['relation'].str.startswith("I")]
     df_sub2 = df[df['relation'].str.startswith("D")]
     plt.scatter(df_sub['prec_at_1'], df_sub[x_axis], marker='^')
@@ -217,31 +195,12 @@ def create_scatter_plot(x_axis, y_axis, df):
 
 def main():
 
-    path ="/home/evahu/Documents/Master/Master_Dissertation/results_final/FRENCH2/results_with_baseline_SMALL.csv"
-    out = path.replace(".csv", "_plot.pdf")
-    #df = pd.read_csv(path, sep='\t', index_col='relation')
+    path ="results_turkish.csv"
+    out = path.replace(".csv", "_plot_full.pdf")
     df = pd.read_csv(path, sep='\t')
     print(df.keys())
-    plot_results(df, 'relation', 'prec_at_1','prec_at_1_baseline', out)
+    plot_results(df, 'relation', 'prec_at_1','prec_at_1_baseline', 0.7, out)
 
-    """
-    path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_rank_plustraining.csv'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_rank_plustraining_plot_whole.pdf'
-    df = pd.read_csv(path, delimiter="\t")
-    change_in_rank(df, out_path, nr_rows=0)
-   
-    path_in = "/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/mean_relations_normal_means_with_offsets.csv"
-    path_out = path_in.replace(".csv", "_plot.pdf")
-    df = pd.read_csv(path_in, delimiter="\t")
-    print(df.keys())
 
-    y_axis = "average_offset_similarity"
-    scatter_value_against_performance(df, "prec_at_1", y_axis, "performance", "average_offset_similarity", path_out, log2=False)
-  
-    path = '/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/results_per_word_normal.csv'
-    df = pd.read_csv(path, delimiter="\t")
-    out_path = "/home/evahu/Documents/Master/Master_Dissertation/results_final/GERMAN/rank_distributions/"
-    rank_distributions(df, out_path)
-    """
 if __name__ == "__main__":
     main()
