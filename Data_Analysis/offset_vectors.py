@@ -59,10 +59,11 @@ def embedding_sims(path, e_path, e_dim, out_path, average=True):
 
 
 def main():
-    path = 'FINAL/DE/normal_o1o/combined_train.csv'
-    e_path = 'de_conll_data/model.fifu'
-    out_path = 'embedding_measures/de_normal_o1o_embedding_sims.csv'
+    path = 'quantitative_russian/ALL_IN_ONE.csv'
+    e_path = 'ru_conll_data/model.fifu'
+    out_path = 'quantitative_russian/russian_emb_sims.csv'
     threshold = 1000
+    #(file_path, embedding_path, emb_dim, out_path, threshold):
     embedding_sims(path, e_path, 100, out_path)
 
 if __name__ == "__main__":

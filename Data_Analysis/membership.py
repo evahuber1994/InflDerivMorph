@@ -1,9 +1,12 @@
+"""
+get syncretic slots
+"""
 import pandas as pd
-path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/normal_o1o/ALL_IN_ONE.csv'
-out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/inf_analysed_per_relation.csv'
-out_path2 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/inf_readme.txt'
-out_path3 = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/inf_relation_pairs_words.csv'
-df_out_path = "/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/DE/inf_df.csv"
+path = 'ALL_IN_ONE.csv'
+out_path = 'DE/inf_analysed_per_relation.csv'
+out_path2 = 'DE/inf_readme.txt'
+out_path3 = 'DE/inf_relation_pairs_words.csv'
+df_out_path = "DE/inf_df.csv"
 df_all = pd.read_csv(path, delimiter="\t")
 df = df_all[df_all['relation'].str.startswith("INF")]
 rels = set(df['relation'])
