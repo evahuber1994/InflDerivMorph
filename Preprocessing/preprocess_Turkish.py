@@ -1,5 +1,47 @@
 import pandas as pd
 import csv
+from data_reader import read_deriv
+
+def map_labels(path_labels, path_in, path_out, separator="\t", type_file='data'):
+    old2new = dict()
+
+
+    with open(path_labels, 'r') as rf:
+        next(rf)
+        for l in rf:
+            l = l.strip()
+            line = l.split("\t")
+            old2new[line[0]] = line[1]
+
+    if type_file =='data':
+        rels, w1, w2 = read_deriv(path_in, splitter="\t")
+        with open(path_out, 'w') as wf:
+            wf.write("{}\t{}\t{}\n".format("relation", "w1", "w2"))
+            for r,wone, wtwo in zip(rels, w1, w2):
+                rel = r
+                if r in old2new:
+                    rel = old2new[r]
+                wf.write("{}\t{}\t{}\n".format(rel, wone, wtwo))
+    elif type_file == 'embedding':
+        with open(path_out, 'w') as wf:
+            with open(path_in, 'r') as rf:
+                for l in rf:
+                    l = l.strip()
+                    line = l.split("\t")
+                    rel = line[0]
+                    if line[0] in old2new:
+                        rel = old2new[line[0]]
+                    wf.write("{}\t{}\n".format(rel, line[1]))
+
+    else:
+        df = pd.read_csv(path_in, delimiter=separator)
+        print(df.keys())
+        for r in df['relation']:
+            if r in old2new:
+                df['relation'] = df['relation'].replace([r],old2new[r])
+        print(path_out)
+        df.to_csv(path_out, sep="\t", index=False)
+
 
 def read_file(path):
     df = pd.read_csv(path, delimiter="\t")
@@ -28,7 +70,7 @@ def make_relations(path, column_nr, threshold =80):
             l = l.strip()
             if not l: continue
             line = l.split("\t")
-            pos1 = line[5].split("+")[0]
+            pos1 = line[4].split("+")[0]
             pos2 = line[5].split("+")[0]
             rel = "{}_{}_{}".format(pos1, pos2, line[column_nr])
             if rel in dict_rel:
@@ -44,18 +86,13 @@ def make_relations(path, column_nr, threshold =80):
 def save_correct_format(dict_rel, out_path):
     with open(out_path, 'w') as wf:
         writer = csv.writer(wf, delimiter="\t")
-        writer.writerow(("relation", "w1", "w2", "suffix", "allomorph"))
+        writer.writerow(("relation_old", "relation", "w1", "w2", "suffix", "allomorph"))
         for k,v in dict_rel.items():
             for w in v:
-                writer.writerow((k, w[1].lower(), w[0].lower(),w[2], w[3]))
+                spl = k.split("_")
+                old_rel = spl[1] + "_" + spl[1] +"_" + spl[-1]
+                writer.writerow((old_rel,k, w[1].lower(), w[0].lower(),w[2], w[3]))
 def main():
-    # path = '/home/evahu/Documents/Master/Master_Dissertation/data/Turkish/TrLex.csv'
-    # df = read_file(path)
-    # save_correct_format(df, out_path)
-    path = '/home/evahu/Documents/Master/Master_Dissertation/data/Turkish/TrLex_small.csv'
-    dic, co = make_relations(path, column_nr=3)
-    print(co)
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/data/Turkish/Turkish_Derivation_prepared_allomorphs.csv'
-    save_correct_format(dic, out_path)
+
 if __name__ == "__main__":
     main()

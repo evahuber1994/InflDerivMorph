@@ -6,8 +6,8 @@ import os
 import pandas as pd
 import numpy as np
 """
-preprocessing file to extract all pairs that share a relation from DErivBase
-boolean in read method to indicate whether inverse relation marked by star should be added or not
+preprocessing file to extract all pairs that share a relation from DErivBase or other datbase 
+boolean in read method to indicate whether inverse relation im DErivBase marked by star should be added or not
 """
 
 class Preprocesser():
@@ -141,13 +141,13 @@ class Preprocesser():
                 if ' ' in line[0] or ' ' in line[1]:
                     continue
                 if self.oov:  # if oov is true, then skip all words that either base or derived form is not in vocabulary
-                    if line[1] not in self.embedding_voc or line[2] not in self.embedding_voc:
+                    if line[1].lower() not in self.embedding_voc or line[2].lower() not in self.embedding_voc:
                         print(line)
                         continue
                 if line[0] in dict_relations:
-                    dict_relations[line[0]].append((line[1], line[2]))
+                    dict_relations[line[0]].append((line[1].lower(), line[2].lower()))
                 else:
-                    dict_relations[line[0]] = [(line[1], line[2])]
+                    dict_relations[line[0]] = [(line[1].lower(), line[2].lower())]
         return dict_relations
 
 
@@ -286,7 +286,6 @@ def make_splits_balanced(path_in, path_out, train_size = 0.6, test_size= 0.2):
             if line[0] in dict_relations:
                 dict_relations[line[0]].append((line[1], line[2]))
             else:
-                print(line)
                 dict_relations[line[0]] = [(line[1], line[2])]
     train_path = path_out + "train.csv"
     val_path = path_out + "val.csv"
@@ -351,34 +350,14 @@ def combine_files(deriv_path, infl_path, out_path):
 
 
 def main():
-    """
-    in_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/rus_data_conll/INFLECTION/rus_labs.csv'
 
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/rus_data_conll/INFLECTION/rus_thresh80.csv'
+    embs = "fr_43/model.fifu"
+    emb = FeatureExtractor(embs, embedding_dim=100)
+    data = "ALL_WITH_NOUNS.csv"
+    out = data.replace(".csv", "thresh80.csv")
+    prep = Preprocesser(data, out, emb.vocab)
 
-    embs = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/embeddings/rus_65/model.fifu'
-    emb = FeatureExtractor(embs, 100)
-
-    prep = Preprocesser(in_path, out_path, emb.vocab, threshold=60)
     prep.read_and_write_unimorph()
 
-
-    in_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/DERIVATION/Turkish_Derivation_thresh80_no1t1.csv'
-    out_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/DERIVATION/splits_1t1/'
-
-
-    make_splits_balanced(in_path, out_path)
-
-    """
-    d_path ='/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/DERIVATION/splits'
-    i_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/INFLECTION/splits_small'
-    o_path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/FINAL/TUR/small'
-    combine_files(d_path, i_path, o_path)
-    """
-    path_der = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/DERIVATION/splits_1t1/train.csv'
-    path_inf = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/INFLECTION/splits_1t1/train.csv'
-    path_out = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/INFLECTION/splits_small_1t1/train.csv'
-    shorten_files(path_inf, path_der, path_out)
-    """
 if __name__ == "__main__":
     main()

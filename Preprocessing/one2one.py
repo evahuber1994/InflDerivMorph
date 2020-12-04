@@ -33,9 +33,9 @@ def write_smaller_file(dict_rel, o2o, out_path):
                     writer.writerow((k, w[0], w[1]))
 
 def main():
-    #path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/de_data_conll/INFLECTION/inf80.csv'
-    path = '/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/DERIVATION/Turkish_Derivation_thresh80.csv'
-    out_path ='/home/evahu/Documents/Master/Master_Dissertation/InflDerivMorph/data/tur_data_conll/DERIVATION/Turkish_Derivation_thresh80_no1t1.csv'
+
+    path = "ALL_WITH_NOUNSthresh80.csv"
+    out_path = path.replace(".csv", "_no1t1.csv")
     dict_rel = create_dict(path)
 
     dict_1t1, o2o, d_lengths = check_1t1(dict_rel)
@@ -43,7 +43,6 @@ def main():
         if (d_lengths[k] - len(v)) < 10:
             if k not in o2o:
                 o2o.append(k)
-    print(o2o)
     write_smaller_file(dict_rel, o2o, out_path)
 
 
